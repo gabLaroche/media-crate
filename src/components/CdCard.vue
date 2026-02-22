@@ -1,5 +1,11 @@
 <script setup>
-defineProps(["cd"]);
+const { cd } = defineProps(["cd"]);
+
+const acquiredDate = new Date(cd.acquired_date).toLocaleDateString("en-CA", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+});
 </script>
 
 <template>
@@ -11,6 +17,10 @@ defineProps(["cd"]);
             <strong>{{ cd.artist }}</strong>
             <div>{{ cd.album_name }}</div>
             <div>{{ cd.release_date }}</div>
+            <div>
+                Acquired:
+                {{ acquiredDate }}
+            </div>
         </div>
     </div>
 </template>

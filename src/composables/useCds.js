@@ -5,11 +5,22 @@ const cds = ref([]);
 
 export function useCds() {
   const fetchAll = async () => {
-    const { data } = await supabase.from("cds").select("*").order("artist");
+    const { data } = await supabase
+      .from("cds")
+      .select("*")
+      .order("acquired_date", { ascending: true });
     cds.value = data || [];
   };
 
   const addCd = (cd) => supabase.from("cds").insert(cd);
+
+  const sortCds = async (criteria, ascending = true) => {
+    const { data } = await supabase
+      .from("cds")
+      .select("*")
+      .order(criteria, { ascending });
+    cds.value = data || [];
+  };
 
   const updateCd = (id, updates) =>
     supabase.from("cds").update(updates).eq("id", id);
@@ -21,5 +32,5 @@ export function useCds() {
     return data?.[0];
   };
 
-  return { cds, fetchAll, addCd, updateCd, deleteCd, getRandomCd };
+  return { cds, fetchAll, addCd, updateCd, deleteCd, getRandomCd, sortCds };
 }
