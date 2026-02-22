@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { useCds } from "@/composables/useCds";
+import { RiArrowUpLine } from "@remixicon/vue";
 import CdCard from "./CdCard.vue";
 
 const { cds, fetchAll, sortCds } = useCds();
@@ -32,6 +33,7 @@ onMounted(fetchAll);
                     Current Sort Order:
                     {{ ascending ? "Ascending" : "Descending" }}
                 </p>
+                <RiArrowUpLine />
             </div>
         </div>
         <div>

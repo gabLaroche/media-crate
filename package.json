@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@remixicon/vue": "^4.9.0",
     "@supabase/supabase-js": "^2.97.0",
     "maska": "^3.2.0",
     "vue": "^3.5.28",
