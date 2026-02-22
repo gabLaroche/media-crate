@@ -1,10 +1,10 @@
 <script setup>
 import { reactive, computed, ref } from "vue";
 import { vMaska } from "maska/vue";
-import { useCds } from "@/composables/useCds";
+import { useMediaItems } from "@/composables/useMediaItems";
 import DiscogsSearch from "@/components/DiscogsSearch.vue";
 
-const { addCd } = useCds();
+const { addMediaItem } = useMediaItems();
 
 const form = reactive({
     album_name: "",
@@ -30,7 +30,7 @@ const isFormDisabled = computed(() => {
 
 const submit = async () => {
     isFormSubmitting.value = true;
-    await addCd(form)
+    await addMediaItem(form)
         .then(() => {
             form.album_name = "";
             form.artist = "";
@@ -92,6 +92,13 @@ const autofill = (release) => {
         <label for="source">Source:</label>
         <input id="source" v-model="form.source" placeholder="Source" />
 
+        <label for="condition">Type:</label>
+        <select id="type" v-model="form.media_type">
+            <option value="cd">CD</option>
+            <option value="vinyl">Vinyl</option>
+            <option value="cassette">Cassette</option>
+        </select>
+
         <label for="condition">Condition:</label>
         <select id="condition" v-model="form.condition">
             <option value="new">New</option>
@@ -100,7 +107,7 @@ const autofill = (release) => {
 
         <label for="notes">Notes:</label>
         <textarea id="notes" v-model="form.notes" />
-        <button :disabled="isFormDisabled">Add CD</button>
+        <button :disabled="isFormDisabled">Add Media item</button>
     </form>
 </template>
 

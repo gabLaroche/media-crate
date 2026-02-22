@@ -14,7 +14,7 @@ const onLogout = async () => {
     <nav class="navbar">
         <router-link to="/">Collection</router-link>
         <router-link to="/random">Random</router-link>
-        <router-link to="/add">Add CD</router-link>
+        <router-link to="/add">Add Media item</router-link>
 
         <button @click="onLogout">Logout</button>
     </nav>

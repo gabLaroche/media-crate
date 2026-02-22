@@ -1,12 +1,12 @@
 <script setup>
 import { ref } from "vue";
-import { useCds } from "@/composables/useCds";
+import { useMediaItems } from "@/composables/useMediaItems";
 
-const { getSmartRandomCd, markPlayed } = useCds();
+const { getSmartRandomMediaItem, markPlayed } = useMediaItems();
 const current = ref(null);
 
 const pick = async () => {
-    current.value = await getSmartRandomCd();
+    current.value = await getSmartRandomMediaItem();
 };
 
 const played = async () => {
@@ -15,7 +15,7 @@ const played = async () => {
 </script>
 
 <template>
-    <button @click="pick">Pick a CD</button>
+    <button @click="pick">Pick a Media item</button>
 
     <div v-if="current">
         <img

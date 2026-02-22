@@ -1,10 +1,10 @@
 <script setup>
-import CdList from "@/components/CdList.vue";
+import MediaItemList from "@/components/MediaItemList.vue";
 </script>
 
 <template>
     <div>
         <h1>My Collection</h1>
-        <CdList />
+        <MediaItemList />
     </div>
 </template>
