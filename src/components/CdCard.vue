@@ -10,8 +10,13 @@ const acquiredDate = new Date(cd.acquired_date).toLocaleDateString("en-CA", {
 
 <template>
     <div class="card">
-        <img v-if="cd.artwork_url" :src="cd.artwork_url" width="80" />
-        <img v-else src="/No_Image_Available.jpg" width="80" />
+        <img
+            v-if="cd.artwork_url"
+            :src="cd.artwork_url"
+            width="80"
+            height="80"
+        />
+        <img v-else src="/No_Image_Available.jpg" width="80" height="80" />
 
         <div>
             <strong>{{ cd.artist }}</strong>

@@ -9,7 +9,7 @@
 body {
     font-family: "Lato", sans-serif;
     margin: 0;
-    padding: 0;
+    padding: 16px;
     background-color: #f5f5f5;
 }
 
