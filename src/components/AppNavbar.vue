@@ -1,6 +1,13 @@
 <script setup>
 import { useAuth } from "@/composables/useAuth";
+import { useRouter } from "vue-router";
+const router = useRouter();
 const { logout } = useAuth();
+
+const onLogout = async () => {
+    await logout();
+    router.push({ path: "/login" });
+};
 </script>
 
 <template>
@@ -9,7 +16,7 @@ const { logout } = useAuth();
         <router-link to="/random">Random</router-link>
         <router-link to="/add">Add CD</router-link>
 
-        <button @click="logout">Logout</button>
+        <button @click="onLogout">Logout</button>
     </nav>
 </template>
 
