@@ -23,7 +23,8 @@ const submit = async () => {
 
 <template>
     <div>
-        <h1>Login</h1>
+        <h1>MediaCrate</h1>
+        <h2>Login</h2>
 
         <form @submit.prevent="submit">
             <label for="email">Email:</label>
@@ -46,8 +47,7 @@ form {
     display: flex;
     flex-direction: column;
     gap: 10px;
-}
-
-button {
+    min-width: 25vw;
+    max-width: 400px;
 }
 </style>

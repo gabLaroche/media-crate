@@ -1,5 +1,9 @@
 <script setup>
-const { mediaItem } = defineProps(["mediaItem"]);
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useMediaItems } from "@/composables/useMediaItems";
+const { mediaItem, showButtons } = defineProps(["mediaItem", "showButtons"]);
+const { deleteMediaItem } = useMediaItems();
 
 const acquiredDate = new Date(mediaItem.acquired_date).toLocaleDateString(
     "en-CA",
@@ -9,6 +13,22 @@ const acquiredDate = new Date(mediaItem.acquired_date).toLocaleDateString(
         day: "numeric",
     },
 );
+
+const emit = defineEmits(["deleted"]);
+
+const deleteConfirmRef = ref(null);
+const router = useRouter();
+
+const goToEditPage = () => {
+    router.push(`/edit/${mediaItem.id}`);
+};
+
+const deleteItem = () => {
+    deleteMediaItem(mediaItem.id).then(() => {
+        emit("deleted", mediaItem.id);
+        deleteConfirmRef.value.close();
+    });
+};
 </script>
 
 <template>
@@ -30,14 +50,56 @@ const acquiredDate = new Date(mediaItem.acquired_date).toLocaleDateString(
                 {{ acquiredDate }}
             </div>
         </div>
+
+        <div v-if="showButtons" class="buttons">
+            <button @click="goToEditPage">Edit</button>
+            <button
+                command="show-modal"
+                :commandfor="`delete-confirm-${mediaItem.id}`"
+            >
+                Delete
+            </button>
+
+            <dialog
+                :id="`delete-confirm-${mediaItem.id}`"
+                ref="deleteConfirmRef"
+            >
+                <p>
+                    Are you sure you want to delete
+                    <strong>{{ mediaItem.album_name }}</strong> by
+                    <strong>{{ mediaItem.artist }}</strong
+                    >?
+                </p>
+                <div class="buttons">
+                    <button @click="deleteItem">Yes</button>
+                    <button
+                        :commandfor="`delete-confirm-${mediaItem.id}`"
+                        command="close"
+                    >
+                        No
+                    </button>
+                </div>
+            </dialog>
+        </div>
     </div>
 </template>
 
-<style>
+<style scoped>
 .card {
+    align-items: center;
     display: flex;
-    gap: 10px;
+    gap: 16px;
     padding: 10px;
     border-bottom: 1px solid #eee;
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+}
+
+dialog {
+    max-width: 400px;
 }
 </style>

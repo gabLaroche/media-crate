@@ -12,6 +12,17 @@ export function useMediaItems() {
     mediaItems.value = data || [];
   };
 
+  const fetchOne = async (id) => {
+    const { data } = await supabase
+      .from("media_items")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    console.log(data);
+    return data;
+  };
+
   const addMediaItem = (mediaItem) =>
     supabase.from("media_items").insert(mediaItem);
 
@@ -37,6 +48,7 @@ export function useMediaItems() {
   return {
     mediaItems,
     fetchAll,
+    fetchOne,
     addMediaItem,
     updateMediaItem,
     deleteMediaItem,

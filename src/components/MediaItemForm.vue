@@ -1,10 +1,13 @@
 <script setup>
-import { reactive, computed, ref } from "vue";
+import { reactive, computed, ref, watch } from "vue";
 import { vMaska } from "maska/vue";
 import { useMediaItems } from "@/composables/useMediaItems";
 import DiscogsSearch from "@/components/DiscogsSearch.vue";
 
-const { addMediaItem } = useMediaItems();
+const { addMediaItem, updateMediaItem } = useMediaItems();
+
+const { mediaItem } = defineProps(["mediaItem"]);
+const emit = defineEmits(["submitted"]);
 
 const form = reactive({
     album_name: "",
@@ -12,6 +15,7 @@ const form = reactive({
     release_date: "",
     acquired_date: "",
     source: "",
+    media_type: "cd",
     condition: "used",
     notes: "",
 });
@@ -19,34 +23,55 @@ const form = reactive({
 const isFormSubmitting = ref(false);
 
 const isFormDisabled = computed(() => {
-    return (
-        !form.album_name ||
-        !form.artist ||
-        !form.release_date ||
-        !form.acquired_date ||
-        !form.source
-    );
+    return !form.album_name || !form.artist || !form.release_date;
 });
+
+watch(
+    () => mediaItem,
+    (val) => {
+        if (val) Object.assign(form, val);
+    },
+    { immediate: true },
+);
 
 const submit = async () => {
     isFormSubmitting.value = true;
-    await addMediaItem(form)
-        .then(() => {
-            form.album_name = "";
-            form.artist = "";
-            form.release_date = "";
-            form.acquired_date = "";
-            form.source = "";
-            form.condition = "used";
-            form.notes = "";
-            form.artwork_url = "";
-        })
-        .catch((error) => {
-            console.error(error);
-        })
-        .finally(() => {
-            isFormSubmitting.value = false;
-        });
+    if (mediaItem) {
+        await updateMediaItem(mediaItem.id, form)
+            .then(() => {
+                resetForm();
+                emit("submitted");
+            })
+            .catch((error) => {
+                console.error(error);
+            })
+            .finally(() => {
+                isFormSubmitting.value = false;
+            });
+    } else {
+        await addMediaItem(form)
+            .then(() => {
+                resetForm();
+            })
+            .catch((error) => {
+                console.error(error);
+            })
+            .finally(() => {
+                isFormSubmitting.value = false;
+            });
+    }
+};
+
+const resetForm = () => {
+    form.album_name = "";
+    form.artist = "";
+    form.release_date = "";
+    form.acquired_date = "";
+    form.source = "";
+    form.condition = "used";
+    form.media_type = "cd";
+    form.notes = "";
+    form.artwork_url = "";
 };
 
 const autofill = (release) => {
@@ -60,7 +85,7 @@ const autofill = (release) => {
 </script>
 
 <template>
-    <DiscogsSearch @selected="autofill" />
+    <DiscogsSearch v-if="!mediaItem" @selected="autofill" />
     <form @submit.prevent="submit">
         <div v-if="form.artwork_url">
             <img :src="form.artwork_url" width="150" />
@@ -107,7 +132,9 @@ const autofill = (release) => {
 
         <label for="notes">Notes:</label>
         <textarea id="notes" v-model="form.notes" />
-        <button :disabled="isFormDisabled">Add Media item</button>
+        <button :disabled="isFormDisabled">
+            {{ !mediaItem ? "Add Media item" : "Update Media item" }}
+        </button>
     </form>
 </template>
 

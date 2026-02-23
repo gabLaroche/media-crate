@@ -29,6 +29,7 @@ const router = createRouter({
       children: [
         {
           path: "",
+          name: "collection",
           component: () => import("@/pages/CollectionView.vue"),
           meta: {
             title: "My music collection",
@@ -36,13 +37,24 @@ const router = createRouter({
         },
         {
           path: "add",
+          name: "add",
           component: () => import("@/pages/AddMediaItemView.vue"),
           meta: {
             title: "Add media item | My music collection",
           },
         },
         {
+          path: "edit/:id",
+          name: "edit",
+          component: () => import("@/pages/EditMediaItemView.vue"),
+          props: true,
+          meta: {
+            title: "Edit media item | My music collection",
+          },
+        },
+        {
           path: "random",
+          name: "random",
           component: () => import("@/pages/RandomView.vue"),
           meta: {
             title: "Random media item | My music collection",

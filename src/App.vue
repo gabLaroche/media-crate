@@ -5,12 +5,23 @@
 </template>
 
 <style>
-/* latin subset — adjust if you need other subsets */
+:root {
+    --primary-color: #007bff;
+    --primary-color-dark: #0069d9;
+    --secondary-color: #ccc;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+}
+
 body {
     font-family: "Lato", sans-serif;
     margin: 0;
     padding: 16px;
-    background-color: #f5f5f5;
+    background-color: var(--light-color);
 }
 
 /* Lato 300 */
@@ -84,26 +95,39 @@ input,
 select,
 textarea {
     padding: 0.5rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--secondary-color);
     border-radius: 4px;
 }
 
 button {
     padding: 0.5rem 1rem;
-    background-color: #007bff;
+    background-color: var(--primary-color);
     color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: var(--primary-color-dark);
 }
 
 button:disabled {
-    background-color: #ccc;
-    color: #666;
+    background-color: var(--secondary-color);
+    color: #000;
     cursor: not-allowed;
+}
+
+a:link,
+a:visited {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+a:hover,
+a:active {
+    color: var(--primary-color-dark);
 }
 </style>
