@@ -29,13 +29,15 @@ const selectRelease = (r) => {
 </script>
 
 <template>
-    <div>
+    <div class="discogs-search">
         <h3>Auto-fill from Discogs</h3>
 
-        <input v-model="artist" placeholder="Artist" />
-        <input v-model="album" placeholder="Album" />
+        <div class="search">
+            <input v-model="artist" placeholder="Artist" />
+            <input v-model="album" placeholder="Album" />
 
-        <button @click="search">Search</button>
+            <button @click="search">Search</button>
+        </div>
 
         <p v-if="loading">Searching…</p>
 
@@ -51,16 +53,24 @@ const selectRelease = (r) => {
     </div>
 </template>
 
-<style>
-.results {
-    max-width: 500px;
-    max-height: 300px;
-    overflow-y: auto;
-}
-.result {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin: 10px 0;
+<style lang="scss" scoped>
+.discogs-search {
+    margin-bottom: 20px;
+    .search {
+        display: flex;
+        gap: 10px;
+    }
+
+    .results {
+        max-width: 500px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .result {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 10px 0;
+    }
 }
 </style>

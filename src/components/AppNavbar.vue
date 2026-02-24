@@ -14,17 +14,26 @@ const onLogout = async () => {
     <nav class="navbar">
         <router-link to="/">Collection</router-link>
         <router-link to="/random">Random</router-link>
-        <router-link to="/add">Add Media item</router-link>
+        <router-link to="/add">Add</router-link>
 
         <button @click="onLogout">Logout</button>
     </nav>
 </template>
 
-<style>
+<style lang="scss" scoped>
 .navbar {
+    align-items: center;
     display: flex;
     gap: 20px;
     padding: 12px;
     border-bottom: 1px solid #ddd;
+
+    a {
+        font-weight: bold;
+    }
+
+    button {
+        margin-left: auto;
+    }
 }
 </style>

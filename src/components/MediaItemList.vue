@@ -1,27 +1,36 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
 import { useMediaItems } from "@/composables/useMediaItems";
-import { RiArrowUpLine, RiArrowDownLine } from "@remixicon/vue";
+import { RiArrowUpLine, RiArrowDownLine, RiLoader4Line } from "@remixicon/vue";
 import MediaItemCard from "./MediaItemCard.vue";
 
 const { mediaItems, fetchAll, sortMediaItems } = useMediaItems();
 const ascending = ref(true);
 const sortState = ref("acquired_date");
+const isFetching = ref(true);
 
 const handleDelete = (id) => {
     mediaItems.value = mediaItems.value.filter((item) => item.id !== id);
 };
 
 watch(sortState, () => {
-    sortMediaItems(sortState.value, ascending.value);
+    isFetching.value = true;
+    sortMediaItems(sortState.value, ascending.value).finally(() => {
+        isFetching.value = false;
+    });
 });
 
 watch(ascending, () => {
-    sortMediaItems(sortState.value, ascending.value);
+    isFetching.value = true;
+    sortMediaItems(sortState.value, ascending.value).finally(() => {
+        isFetching.value = false;
+    });
 });
 
 onMounted(() => {
-    fetchAll();
+    fetchAll().finally(() => {
+        isFetching.value = false;
+    });
 });
 </script>
 
@@ -80,7 +89,8 @@ onMounted(() => {
                 </button>
             </div>
         </div>
-        <div>
+        <div v-if="isFetching" class="media-item-list"></div>
+        <div v-if="mediaItems.length > 0" class="media-item-list">
             <MediaItemCard
                 v-for="mediaItem in mediaItems"
                 :key="mediaItem.id"
@@ -92,7 +102,7 @@ onMounted(() => {
     </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .sort-buttons {
     align-items: center;
     display: flex;
@@ -111,6 +121,13 @@ onMounted(() => {
 .sort-order button {
     display: flex;
     align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.media-item-list {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
     justify-content: center;
 }

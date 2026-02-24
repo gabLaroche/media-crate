@@ -28,7 +28,7 @@ const submit = async () => {
 
         <form @submit.prevent="submit">
             <label for="email">Email:</label>
-            <input id="email" v-model="email" />
+            <input id="email" v-model="email" type="email" />
             <label for="password">Password:</label>
             <input id="password" v-model="password" type="password" />
             <button>Login</button>

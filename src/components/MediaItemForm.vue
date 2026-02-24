@@ -9,11 +9,16 @@ const { addMediaItem, updateMediaItem } = useMediaItems();
 const { mediaItem } = defineProps(["mediaItem"]);
 const emit = defineEmits(["submitted"]);
 
+const today = new Date();
+const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
+    .toISOString()
+    .split("T")[0];
+
 const form = reactive({
     album_name: "",
     artist: "",
     release_date: "",
-    acquired_date: "",
+    acquired_date: localDate,
     source: "",
     media_type: "cd",
     condition: "used",
@@ -114,14 +119,17 @@ const autofill = (release) => {
         />
         <label for="acquired_date">Acquired Date:</label>
         <input id="acquired_date" type="date" v-model="form.acquired_date" />
-        <label for="source">Source:</label>
-        <input id="source" v-model="form.source" placeholder="Source" />
+        <label for="source">
+            <span>Source:</span>
+            <span class="optional">(optional)</span>
+        </label>
+        <input id="source" v-model="form.source" />
 
         <label for="condition">Type:</label>
         <select id="type" v-model="form.media_type">
             <option value="cd">CD</option>
             <option value="vinyl">Vinyl</option>
-            <option value="cassette">Cassette</option>
+            <!-- <option value="cassette">Cassette</option> -->
         </select>
 
         <label for="condition">Condition:</label>
@@ -130,7 +138,10 @@ const autofill = (release) => {
             <option value="used">Used</option>
         </select>
 
-        <label for="notes">Notes:</label>
+        <label for="notes">
+            <span>Notes:</span>
+            <span class="optional">(optional)</span>
+        </label>
         <textarea id="notes" v-model="form.notes" />
         <button :disabled="isFormDisabled">
             {{ !mediaItem ? "Add Media item" : "Update Media item" }}
@@ -138,4 +149,10 @@ const autofill = (release) => {
     </form>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+.optional {
+    color: $neutral-mid;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+</style>

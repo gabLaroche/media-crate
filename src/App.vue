@@ -4,24 +4,12 @@
     <router-view />
 </template>
 
-<style>
-:root {
-    --primary-color: #007bff;
-    --primary-color-dark: #0069d9;
-    --secondary-color: #ccc;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --light-color: #f8f9fa;
-    --dark-color: #343a40;
-}
-
+<style lang="scss">
 body {
     font-family: "Lato", sans-serif;
     margin: 0;
     padding: 16px;
-    background-color: var(--light-color);
+    background-color: $primary-lighter;
 }
 
 /* Lato 300 */
@@ -94,40 +82,57 @@ label {
 input,
 select,
 textarea {
+    background-color: $neutral-white;
     padding: 0.5rem;
-    border: 1px solid var(--secondary-color);
+    border: 1px solid $neutral-light;
     border-radius: 4px;
 }
 
 button {
     padding: 0.5rem 1rem;
-    background-color: var(--primary-color);
+    background-color: $primary;
     color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all $transition;
 }
 
 button:hover {
-    background-color: var(--primary-color-dark);
+    background-color: $primary-dark;
 }
 
 button:disabled {
-    background-color: var(--secondary-color);
+    background-color: $neutral-mid;
     color: #000;
     cursor: not-allowed;
 }
 
+.button {
+    &--delete {
+        background-color: $danger;
+
+        &:hover {
+            background-color: $danger-dark;
+        }
+    }
+}
+
 a:link,
 a:visited {
-    color: var(--primary-color);
+    color: $primary;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all $transition;
 }
 
 a:hover,
 a:active {
-    color: var(--primary-color-dark);
+    color: $primary-dark;
+}
+
+img {
+    border-radius: 4px;
+    max-width: 100%;
+    height: auto;
 }
 </style>

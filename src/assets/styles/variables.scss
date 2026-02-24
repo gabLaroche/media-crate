@@ -1,0 +1,30 @@
+@use "sass:color";
+
+// Primary
+$primary: hsl(202 100% 50%);
+
+// Lighter / Darker Shades
+$primary-light: hsl(202 100% 65%);
+$primary-muted: hsl(202 50% 90%);
+$primary-lighter: hsl(202 100% 97%);
+$primary-dark: hsl(202 100% 35%);
+$primary-darker: hsl(202 100% 20%);
+
+$secondary: hsl(22 100% 50%);
+$secondary-muted: hsl(22 50% 90%);
+$secondary-light: hsl(22 100% 65%);
+$secondary-lighter: hsl(22 100% 97%);
+$secondary-dark: hsl(22 100% 35%);
+$secondary-darker: hsl(22 100% 20%);
+
+// Neutral Support Colors
+$neutral-dark: hsl(202 20% 12%);
+$neutral-mid: hsl(202 15% 35%);
+$neutral-light: hsl(202 20% 92%);
+$neutral-white: hsl(0 0% 100%);
+
+$danger: hsl(337, 100%, 50%);
+$danger-dark: hsl(337, 100%, 40%);
+$danger-light: hsl(337, 100%, 60%);
+
+$transition: 0.3s ease;
