@@ -115,7 +115,9 @@ onMounted(() => {
 }
 
 .sort-order {
-    margin-left: auto;
+    @media screen and (min-width: 768px) {
+        margin-left: auto;
+    }
 }
 
 .sort-order button {
