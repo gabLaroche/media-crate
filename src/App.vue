@@ -91,7 +91,7 @@ textarea {
 button {
     padding: 0.5rem 1rem;
     background-color: $primary;
-    color: #fff;
+    color: $neutral-white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -104,7 +104,7 @@ button:hover {
 
 button:disabled {
     background-color: $neutral-mid;
-    color: #000;
+    color: $neutral-white;
     cursor: not-allowed;
 }
 

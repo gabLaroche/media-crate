@@ -3,15 +3,14 @@ import { ref } from "vue";
 import { useAuth } from "@/composables/useAuth";
 import { useRouter } from "vue-router";
 
-const { updatePassword } = useAuth();
+const { resetPassword } = useAuth();
 
-const password = ref("");
-const confirmPassword = ref("");
+const email = ref("");
 const error = ref(null);
 const router = useRouter();
 
 const submit = async () => {
-    const { error: err } = await updatePassword(password.value)
+    const { error: err } = await resetPassword(email.value)
         .then(() => {
             router.push({ path: "/" });
         })
@@ -24,22 +23,13 @@ const submit = async () => {
 <template>
     <div>
         <h1>MediaCrate</h1>
-        <h2>Update Password</h2>
+        <h2>Reset Password</h2>
 
         <form @submit.prevent="submit">
-            <label for="password">Password:</label>
-            <input id="password" v-model="password" type="password" />
-            <label for="confirmPassword">Confirm Password:</label>
-            <input
-                id="confirmPassword"
-                v-model="confirmPassword"
-                type="password"
-            />
-            <button
-                :disabled="password !== confirmPassword && password.length >= 6"
-            >
-                Update Password
-            </button>
+            <label for="email">email:</label>
+            <input id="email" v-model="email" type="email" />
+
+            <button :disabled="email.length === 0">Reset Password</button>
         </form>
 
         <p v-if="error">{{ error }}</p>

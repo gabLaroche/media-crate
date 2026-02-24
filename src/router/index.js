@@ -21,6 +21,32 @@ const router = createRouter({
       ],
     },
     {
+      path: "/reset-password",
+      component: AuthLayout,
+      children: [
+        {
+          path: "",
+          component: () => import("@/pages/ResetPasswordView.vue"),
+          meta: {
+            title: "Reset Password | My music collection",
+          },
+        },
+      ],
+    },
+    {
+      path: "/update-password",
+      component: AuthLayout,
+      children: [
+        {
+          path: "",
+          component: () => import("@/pages/UpdatePasswordView.vue"),
+          meta: {
+            title: "Update Password | My music collection",
+          },
+        },
+      ],
+    },
+    {
       path: "/",
       component: MainLayout,
       meta: {
