@@ -8,6 +8,7 @@ const artist = ref("");
 const album = ref("");
 const results = ref([]);
 const loading = ref(false);
+const hasSearched = ref(false);
 
 const search = async () => {
     loading.value = true;
@@ -16,8 +17,8 @@ const search = async () => {
         title: album.value,
     });
     results.value = data.results || [];
-    console.log(data);
     loading.value = false;
+    hasSearched.value = true;
 };
 
 const selectRelease = (r) => {
@@ -40,6 +41,7 @@ const selectRelease = (r) => {
         </div>
 
         <p v-if="loading">Searching…</p>
+        <p v-if="hasSearched && results.length === 0">No results found</p>
 
         <div class="results">
             <div v-for="r in results" :key="r.id" class="result">
@@ -58,7 +60,12 @@ const selectRelease = (r) => {
     margin-bottom: 20px;
     .search {
         display: flex;
+        flex-direction: column;
         gap: 10px;
+
+        @media (min-width: 768px) {
+            flex-direction: row;
+        }
     }
 
     .results {

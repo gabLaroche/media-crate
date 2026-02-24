@@ -1,19 +1,24 @@
 <script setup>
-import { ref } from "vue";
-import { RiLoader4Line } from "@remixicon/vue";
+import { ref, onMounted } from "vue";
 import { useMediaItems } from "@/composables/useMediaItems";
 import MediaItemCard from "@/components/MediaItemCard.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 
-const { getRandomMediaItem } = useMediaItems();
+const { fetchRandomAlbum, updateRecencyWindow } = useMediaItems();
 const current = ref(null);
 const isFetching = ref(false);
 
+onMounted(async () => {
+    await updateRecencyWindow();
+});
+
 const pick = async () => {
     isFetching.value = true;
-    current.value = await getRandomMediaItem().finally(() => {
-        isFetching.value = false;
-    });
+    const album = await fetchRandomAlbum();
+    if (album) {
+        current.value = album;
+    }
+    isFetching.value = false;
 };
 </script>
 
