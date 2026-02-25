@@ -1,5 +1,5 @@
 [[redirects]]
-    from = "/*"
+    from = "https://mediacrate.netlify.app/*"
     to = "https://mediacrate.gabriellaroche.dev"
     status = 301
     force = true
