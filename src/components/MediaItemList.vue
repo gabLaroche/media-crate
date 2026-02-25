@@ -36,6 +36,10 @@ onMounted(() => {
 
 <template>
     <div class="media-item-list">
+        <p>
+            You have <strong>{{ mediaItems.length }}</strong>
+            {{ mediaItems.length > 1 ? "albums" : "album" }} in your collection
+        </p>
         <div class="sort-buttons">
             <h2>Sort by:</h2>
             <div>

@@ -118,6 +118,29 @@ button:disabled {
     }
 }
 
+.optional {
+    color: $neutral-mid;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+.field-wrapper {
+    justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &--checkbox {
+        align-items: center;
+        flex-direction: row;
+
+        input {
+            width: 1rem;
+            height: 1rem;
+        }
+    }
+}
+
 a:link,
 a:visited {
     color: $primary;

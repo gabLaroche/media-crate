@@ -51,9 +51,9 @@ const onDialogClick = (e) => {
         <img v-else src="/No_Image_Available.jpg" width="80" height="80" />
 
         <div>
-            <strong>{{ mediaItem.artist }}</strong>
-            <div>{{ mediaItem.album_name }}</div>
-            <div>{{ mediaItem.release_date }}</div>
+            <strong>{{ mediaItem.album_name }}</strong>
+            <div>By: {{ mediaItem.artist }}</div>
+            <div>Released: {{ mediaItem.release_date }}</div>
             <div>
                 Acquired:
                 {{ acquiredDate }}

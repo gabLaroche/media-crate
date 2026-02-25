@@ -24,8 +24,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: "MusicCrate",
-        short_name: "MusicCrate",
+        name: "MediaCrate",
+        short_name: "MediaCrate",
         description: "A catalog of physical music media",
         theme_color: "#ffffff",
         background_color: "#ffffff",
