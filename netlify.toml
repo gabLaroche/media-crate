@@ -1,5 +1,5 @@
 [[redirects]]
     from = "/*"
-    to = "https://mediacrate.grabriellaroche.dev"
+    to = "https://mediacrate.gabriellaroche.dev"
     status = 301
     force = true
