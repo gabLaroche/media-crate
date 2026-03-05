@@ -57,8 +57,8 @@ onMounted(() => {
         <div>
             <strong>{{ release.album_name }}</strong>
             <div>By: {{ release.artist }}</div>
-            <div>Released: {{ release.release_date }}</div>
-            <div>
+            <div>{{ release.release_date }}</div>
+            <div v-if="release.acquired_date">
                 Acquired:
                 {{ acquiredDate }}
             </div>

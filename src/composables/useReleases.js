@@ -1,10 +1,8 @@
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
 
 const releases = ref([]);
-const STORAGE_KEY = "shuffle_recent_ids";
-
 export function useReleases() {
   const flattenCollection = (item) => ({
     // collection fields
@@ -198,67 +196,40 @@ export function useReleases() {
     return res.json();
   };
 
-  const recentIds = ref([]);
-  const recencyWindow = ref(3);
+  const fetchRandomRelease = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  if (localStorage.getItem(STORAGE_KEY)) {
-    try {
-      recentIds.value = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    } catch {
-      recentIds.value = [];
-    }
-  }
-
-  watch(
-    recentIds,
-    (newVal) => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
-    },
-    { deep: true },
-  );
-
-  const updateRecencyWindow = async () => {
-    const { count } = await supabase
-      .from("collections")
-      .select("*", { count: "exact", head: true })
-      .eq("exclude_from_randomizer", false);
-    if (count) {
-      recencyWindow.value = Math.max(3, Math.floor(count * 0.1));
-    }
-  };
-
-  const fetchRandomAlbum = async () => {
-    const { user } = useAuth();
-    if (!user) return null;
-
-    const { data: album, error } = await supabase.rpc(
-      "get_weighted_random_album",
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/randomize-collection`,
       {
-        p_user_id: user.value.id,
-        p_recent_ids: recentIds.value.length > 0 ? recentIds.value : null,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       },
     );
 
-    if (error) {
-      console.error(error);
-      return null;
-    }
+    if (!res.ok) return null;
 
-    const selected = album?.[0] ?? null;
-    if (!selected) return null;
+    const body = await res.json();
+    const item = body.results?.[0];
+    if (!item) return null;
 
-    // Update recentIds and persist automatically via watch
-    recentIds.value.unshift(selected.id);
-    if (recentIds.value.length > recencyWindow.value) {
-      recentIds.value.pop();
-    }
-
-    return selected;
-  };
-
-  const getRandomRelease = async () => {
-    const { data } = await supabase.rpc("get_random_release");
-    return data?.[0];
+    return {
+      id: item.id,
+      user_id: item.user_id,
+      release_id: item.releases?.id,
+      media_type: item.media_type,
+      exclude_from_randomizer: item.exclude_from_randomizer,
+      created_at: item.created_at,
+      album_name: item.releases?.title,
+      artist: item.releases?.artist,
+      release_date: item.releases?.year,
+      discogs_master_id: item.releases?.discogs_master_id,
+      artwork_url: item.releases?.artworks?.url ?? null,
+      artwork_file_path: item.releases?.artworks?.file_path ?? null,
+    };
   };
 
   return {
@@ -268,9 +239,7 @@ export function useReleases() {
     addRelease,
     updateRelease,
     deleteRelease,
-    getRandomRelease,
-    fetchRandomAlbum,
-    updateRecencyWindow,
+    fetchRandomRelease,
     sortReleases,
     bulkAddReleases,
   };
