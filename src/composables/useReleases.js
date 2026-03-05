@@ -157,11 +157,26 @@ export function useReleases() {
     if (collErr) throw collErr;
   };
 
+  const sortColumnMap = {
+    album_name: { column: "title", foreignTable: "releases" },
+    artist: { column: "artist", foreignTable: "releases" },
+    release_date: { column: "year", foreignTable: "releases" },
+    acquired_date: { column: "acquired_date", foreignTable: undefined },
+    created_at: { column: "created_at", foreignTable: undefined },
+  };
+
   const sortReleases = async (criteria, ascending = true) => {
+    const mapping = sortColumnMap[criteria] ?? {
+      column: "created_at",
+      foreignTable: undefined,
+    };
     const { data } = await supabase
       .from("collections")
       .select("*, release:releases(*, artwork:artworks(*))")
-      .order(criteria, { ascending });
+      .order(mapping.column, {
+        ascending,
+        referencedTable: mapping.foreignTable,
+      });
     releases.value = (data || []).map(flattenCollection);
   };
 
@@ -220,6 +235,10 @@ export function useReleases() {
       id: item.id,
       user_id: item.user_id,
       release_id: item.releases?.id,
+      condition: item.condition,
+      notes: item.notes,
+      source_id: item.source_id,
+      acquired_date: item.acquired_date,
       media_type: item.media_type,
       exclude_from_randomizer: item.exclude_from_randomizer,
       created_at: item.created_at,
