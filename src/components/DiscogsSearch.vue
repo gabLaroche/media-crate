@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
+import { RiCheckLine } from "@remixicon/vue";
 import { searchRelease } from "@/lib/discogs";
 import { cleanTitle } from "@/lib/cleanTitle";
 
@@ -121,7 +122,8 @@ defineExpose({ clear });
                             r.country
                         }}</span>
                     </div>
-                    <span v-if="isSelected(r)" class="result__check">✓</span>
+                    <RiCheckLine v-if="isSelected(r)" />
+                    <!-- <span class="result__check">✓</span> -->
                 </div>
             </div>
         </template>
@@ -146,6 +148,7 @@ defineExpose({ clear });
         display: flex;
         gap: 10px;
         margin-top: 10px;
+        flex-wrap: wrap;
     }
 
     .release-filter {

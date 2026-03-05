@@ -34,18 +34,9 @@ const form = reactive({
     discogs_master_id: null,
 });
 
-// --- Bulk mode shared fields ---
-const bulkShared = reactive({
-    artist: "",
-    source_id: "",
-    source_name: "",
-    media_type: "cd",
-    condition: "used",
-});
 const discogsSearchRef = ref(null);
+
 // --- Bulk mode release rows ---
-// Each row is seeded from a Discogs result. Users can tweak album_name,
-// release_date, and notes per row.
 const bulkRows = ref([]);
 
 // Track Discogs IDs already added to prevent duplicates
@@ -53,9 +44,23 @@ const selectedDiscogsIds = computed(() =>
     bulkRows.value.map((r) => r.discogs_id),
 );
 
+const newBulkRow = (overrides = {}) => ({
+    id: crypto.randomUUID(),
+    discogs_id: null,
+    artist: "",
+    album_name: "",
+    release_date: "",
+    acquired_date: localDate,
+    artwork_url: "",
+    notes: "",
+    source_id: "",
+    source_name: "",
+    media_type: "cd",
+    condition: "used",
+    ...overrides,
+});
+
 const onDiscogsSelected = (release) => {
-    // Derive artist + album from Discogs "Artist - Album" title format.
-    // We split only on the first occurrence of " - " to handle edge cases.
     const cleaned = cleanTitle(release.title || "");
     const separatorIndex = cleaned.indexOf(" - ");
     const artist =
@@ -65,17 +70,15 @@ const onDiscogsSelected = (release) => {
             ? cleaned.slice(separatorIndex + 3).trim()
             : cleaned;
 
-    // Pre-fill shared artist on first selection if not already set
-    if (!bulkShared.artist && artist) bulkShared.artist = artist;
-
-    bulkRows.value.push({
-        id: crypto.randomUUID(),
-        discogs_id: release.id,
-        album_name: albumName,
-        release_date: release.year ? String(release.year) : "",
-        artwork_url: release.cover_image || "",
-        notes: "",
-    });
+    bulkRows.value.push(
+        newBulkRow({
+            discogs_id: release.id,
+            artist,
+            album_name: albumName,
+            release_date: release.year ? String(release.year) : "",
+            artwork_url: release.cover_image || "",
+        }),
+    );
 };
 
 const onDiscogsDeselected = (release) => {
@@ -88,14 +91,7 @@ const removeRow = (id) => {
 };
 
 const addEmptyRow = () => {
-    bulkRows.value.push({
-        id: crypto.randomUUID(),
-        discogs_id: null,
-        album_name: "",
-        release_date: "",
-        artwork_url: "",
-        notes: "",
-    });
+    bulkRows.value.push(newBulkRow());
 };
 
 // --- Submission state ---
@@ -108,9 +104,8 @@ const isFormDisabled = computed(
 
 const isBulkDisabled = computed(
     () =>
-        !bulkShared.artist.trim() ||
         bulkRows.value.length === 0 ||
-        bulkRows.value.some((r) => !r.album_name.trim()),
+        bulkRows.value.some((r) => !r.album_name.trim() || !r.artist.trim()),
 );
 
 watch(
@@ -133,7 +128,6 @@ const autofill = (release) => {
     form.release_date = release.year ? String(release.year) : "";
     form.artwork_url = release.cover_image || "";
     form.discogs_master_id = release.id || null;
-    // Clear any manually uploaded file when autofilling from Discogs
     form.artwork_file = null;
 };
 
@@ -141,14 +135,12 @@ const onArtworkUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     form.artwork_file = file;
-    // Show a local preview and clear Discogs URL
     form.artwork_url = URL.createObjectURL(file);
 };
 
 const clearArtwork = () => {
     form.artwork_url = "";
     form.artwork_file = null;
-    // Note: discogs_master_id is intentionally kept — artwork and release ID are independent
 };
 
 const submit = async () => {
@@ -164,7 +156,6 @@ const submit = async () => {
     delete payload.source_name;
 
     if (release) {
-        // On update, only patch the collections fields
         const collectionUpdates = {
             condition: payload.condition,
             notes: payload.notes,
@@ -182,7 +173,10 @@ const submit = async () => {
             .finally(() => (isFormSubmitting.value = false));
     } else {
         await addRelease(payload)
-            .then(() => resetForm())
+            .then(() => {
+                resetForm();
+                router.push({ name: "collection" });
+            })
             .catch(console.error)
             .finally(() => (isFormSubmitting.value = false));
     }
@@ -191,29 +185,32 @@ const submit = async () => {
 const submitBulk = async () => {
     isFormSubmitting.value = true;
 
-    let sourceId = bulkShared.source_id;
-    if (!sourceId && bulkShared.source_name?.trim()) {
-        sourceId = await getOrCreateSource(bulkShared.source_name);
-    }
+    const releases = await Promise.all(
+        bulkRows.value.map(async (row) => {
+            let sourceId = row.source_id;
+            if (!sourceId && row.source_name?.trim()) {
+                sourceId = await getOrCreateSource(row.source_name);
+            }
+            return {
+                title: row.album_name,
+                artist: row.artist.trim(),
+                year: row.release_date ? parseInt(row.release_date) : undefined,
+                acquired_date: row.acquired_date || undefined,
+                discogs_master_id: row.discogs_id ?? undefined,
+                artwork_url: row.artwork_url || undefined,
+                notes: row.notes || undefined,
+                condition: row.condition,
+                source_id: sourceId || undefined,
+                media_type: row.media_type,
+            };
+        }),
+    );
 
-    const payload = {
-        artist: bulkShared.artist.trim(),
-        releases: bulkRows.value.map((row) => ({
-            title: row.album_name,
-            year: row.release_date ? parseInt(row.release_date) : undefined,
-            discogs_master_id: row.discogs_id ?? undefined,
-            artwork_url: row.artwork_url || undefined,
-            notes: row.notes || undefined,
-            condition: bulkShared.condition,
-            source_id: sourceId || undefined,
-            media_type: bulkShared.media_type,
-        })),
-    };
-
-    await bulkAddReleases(payload)
+    await bulkAddReleases({ releases })
         .then(() => {
             resetBulkForm();
             emit("submitted");
+            router.push({ name: "collection" });
         })
         .catch(console.error)
         .finally(() => (isFormSubmitting.value = false));
@@ -238,13 +235,6 @@ const resetForm = () => {
 
 const resetBulkForm = () => {
     discogsSearchRef.value?.clear();
-    Object.assign(bulkShared, {
-        artist: "",
-        source_id: "",
-        source_name: "",
-        media_type: "cd",
-        condition: "used",
-    });
     bulkRows.value = [];
 };
 </script>
@@ -364,8 +354,6 @@ const resetBulkForm = () => {
 
     <!-- ======= BULK MODE ======= -->
     <template v-else>
-        <!-- Single Discogs search at the top; passes already-selected IDs to
-             disable duplicates and show checkmarks -->
         <DiscogsSearch
             :selectedIds="selectedDiscogsIds"
             ref="discogsSearchRef"
@@ -378,78 +366,92 @@ const resetBulkForm = () => {
         </p>
 
         <form v-else @submit.prevent="submitBulk">
-            <!-- Shared fields -->
-            <div class="field-wrapper">
-                <label for="bulk_artist">Artist:</label>
-                <input
-                    id="bulk_artist"
-                    v-model="bulkShared.artist"
-                    placeholder="Artist (shared across all releases)"
-                    required
-                />
-            </div>
-
-            <SourceSelect
-                v-model="bulkShared.source_id"
-                v-model:typed="bulkShared.source_name"
-            />
-
-            <div class="field-wrapper">
-                <label for="bulk_type">Type:</label>
-                <select id="bulk_type" v-model="bulkShared.media_type">
-                    <option value="cd">CD</option>
-                    <option value="vinyl">Vinyl</option>
-                    <option value="cassette">Cassette</option>
-                </select>
-            </div>
-
-            <div class="field-wrapper">
-                <label for="bulk_condition">Condition:</label>
-                <select id="bulk_condition" v-model="bulkShared.condition">
-                    <option value="new">New</option>
-                    <option value="used">Used</option>
-                </select>
-            </div>
-
-            <!-- Release rows -->
-            <div class="bulk-rows" v-if="bulkRows.length > 0">
+            <div class="bulk-rows">
                 <div v-for="row in bulkRows" :key="row.id" class="bulk-row">
-                    <img
-                        v-if="row.artwork_url"
-                        :src="row.artwork_url"
-                        width="50"
-                    />
+                    <!-- Row 1: artwork + artist + album -->
+                    <div class="bulk-row__primary">
+                        <img
+                            v-if="row.artwork_url"
+                            :src="row.artwork_url"
+                            class="bulk-row__artwork"
+                        />
+                        <div v-else class="bulk-row__artwork-placeholder" />
+                        <div class="field-wrapper bulk-row__artist">
+                            <label>Artist:</label>
+                            <input
+                                v-model="row.artist"
+                                placeholder="Artist"
+                                required
+                            />
+                        </div>
+                        <div class="field-wrapper bulk-row__album">
+                            <label>Album:</label>
+                            <input
+                                v-model="row.album_name"
+                                placeholder="Album"
+                                required
+                            />
+                        </div>
+                    </div>
 
-                    <div class="field-wrapper">
-                        <label>Album:</label>
-                        <input
-                            v-model="row.album_name"
-                            placeholder="Album"
-                            required
+                    <!-- Row 2: release year + acquired date + type + condition -->
+                    <div class="bulk-row__meta">
+                        <div class="field-wrapper">
+                            <label>Year:</label>
+                            <input
+                                type="text"
+                                v-maska="'####'"
+                                v-model="row.release_date"
+                                placeholder="YYYY"
+                            />
+                        </div>
+                        <div class="field-wrapper">
+                            <label>Acquired:</label>
+                            <input type="date" v-model="row.acquired_date" />
+                        </div>
+                        <div class="field-wrapper">
+                            <label>Type:</label>
+                            <select v-model="row.media_type">
+                                <option value="cd">CD</option>
+                                <option value="vinyl">Vinyl</option>
+                                <option value="cassette">Cassette</option>
+                            </select>
+                        </div>
+                        <div class="field-wrapper">
+                            <label>Condition:</label>
+                            <select v-model="row.condition">
+                                <option value="new">New</option>
+                                <option value="used">Used</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: source -->
+                    <div class="bulk-row__source">
+                        <SourceSelect
+                            v-model="row.source_id"
+                            v-model:typed="row.source_name"
                         />
                     </div>
 
-                    <div class="field-wrapper">
-                        <label>Release Date:</label>
-                        <input
-                            type="text"
-                            v-maska="'####'"
-                            v-model="row.release_date"
-                            placeholder="YYYY"
-                        />
+                    <!-- Row 4: notes + remove -->
+                    <div class="bulk-row__footer">
+                        <div class="field-wrapper bulk-row__notes">
+                            <label>Notes:</label>
+                            <textarea
+                                v-model="row.notes"
+                                placeholder="(optional)"
+                                rows="1"
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            class="bulk-row__remove"
+                            @click="removeRow(row.id)"
+                        >
+                            Remove
+                        </button>
                     </div>
-
-                    <div class="field-wrapper">
-                        <label>Notes:</label>
-                        <textarea
-                            v-model="row.notes"
-                            placeholder="(optional)"
-                        />
-                    </div>
-
-                    <button type="button" @click="removeRow(row.id)">
-                        Remove
-                    </button>
                 </div>
             </div>
 
@@ -468,10 +470,133 @@ const resetBulkForm = () => {
 </template>
 
 <style lang="scss" scoped>
+// ---- Bulk rows ----
+
+.bulk-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
 .bulk-row {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    &:first-child {
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    // Row 1: artwork + artist + album
+    &__primary {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        @media (min-width: 768px) {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+        }
+    }
+
+    &__artwork {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 3px;
+        flex-shrink: 0;
+
+        @media (min-width: 768px) {
+            width: 48px;
+            height: 48px;
+        }
+    }
+
+    &__artwork-placeholder {
+        display: none;
+
+        @media (min-width: 768px) {
+            display: block;
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+    }
+
+    &__artist {
+        @media (min-width: 768px) {
+            flex: 1;
+        }
+    }
+
+    &__album {
+        @media (min-width: 768px) {
+            flex: 2;
+        }
+    }
+
+    // Row 2: year + acquired + type + condition
+    &__meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        @media (min-width: 768px) {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            padding-left: 58px; // align with fields above (artwork width + gap)
+
+            .field-wrapper {
+                flex: 1;
+
+                input,
+                select {
+                    width: 100%;
+                }
+            }
+        }
+    }
+
+    // Row 3: source
+    &__source {
+        @media (min-width: 768px) {
+            padding-left: 58px;
+        }
+    }
+
+    // Row 4: notes + remove
+    &__footer {
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+
+        @media (min-width: 768px) {
+            flex-direction: row;
+            padding-left: 58px;
+        }
+    }
+
+    &__notes {
+        flex: 1;
+        width: 100%;
+
+        textarea {
+            resize: vertical;
+            min-height: 2em;
+            width: 100%;
+        }
+    }
+
+    &__remove {
+        @media (min-width: 768px) {
+            flex-shrink: 0;
+            align-self: flex-end;
+        }
+    }
 }
 </style>

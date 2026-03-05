@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
@@ -12,12 +12,44 @@ const displayNameSaving = ref(false);
 const displayNameSuccess = ref(false);
 const displayNameError = ref("");
 
+const quotaUsedBytes = ref(0);
+const quotaMb = ref(50);
+const quotaLoading = ref(true);
+
+const fetchQuota = async () => {
+    const { data } = await supabase
+        .from("profiles")
+        .select("used_bytes, upload_quota_mb")
+        .eq("id", user.value.id)
+        .single();
+    if (data) {
+        quotaUsedBytes.value = data.used_bytes ?? 0;
+        quotaMb.value = data.upload_quota_mb ?? 50;
+    }
+    quotaLoading.value = false;
+};
+
+const quotaUsedMb = computed(() =>
+    (quotaUsedBytes.value / 1024 / 1024).toFixed(1),
+);
+const quotaPercent = computed(() =>
+    Math.min(
+        100,
+        Math.round(
+            (quotaUsedBytes.value / (quotaMb.value * 1024 * 1024)) * 100,
+        ),
+    ),
+);
+
 const deleteConfirmText = ref("");
 const deleteLoading = ref(false);
 const deleteError = ref("");
 const deleteDialogRef = ref(null);
 
 const email = computed(() => user.value?.email || "");
+const hasDevicesBeta = computed(
+    () => user.value?.app_metadata?.devices_beta === true,
+);
 const deleteConfirmMatch = computed(
     () => deleteConfirmText.value.trim() === email.value,
 );
@@ -77,6 +109,72 @@ const deleteAccount = async () => {
     await logout();
     router.push("/login");
 };
+
+// --- Devices ---
+const devices = ref([]);
+const newDeviceName = ref("");
+const deviceLoading = ref(false);
+const deviceError = ref("");
+const newToken = ref(null);
+const newTokenCopied = ref(false);
+
+const fetchDevices = async () => {
+    const { data } = await supabase
+        .from("devices")
+        .select("id, name, last_seen, created_at")
+        .order("created_at", { ascending: false });
+    devices.value = data || [];
+};
+
+const generateToken = async () => {
+    if (!newDeviceName.value.trim()) return;
+    deviceLoading.value = true;
+    deviceError.value = "";
+    newToken.value = null;
+
+    const token = crypto.randomUUID();
+
+    const { error } = await supabase.rpc("register_device", {
+        p_user_id: user.value.id,
+        p_name: newDeviceName.value.trim(),
+        p_token: token,
+    });
+
+    if (error) {
+        deviceError.value = error.message;
+    } else {
+        newToken.value = token;
+        newDeviceName.value = "";
+        await fetchDevices();
+    }
+
+    deviceLoading.value = false;
+};
+
+const copyToken = async () => {
+    await navigator.clipboard.writeText(newToken.value);
+    newTokenCopied.value = true;
+    setTimeout(() => (newTokenCopied.value = false), 2000);
+};
+
+const deleteDevice = async (id) => {
+    await supabase.from("devices").delete().eq("id", id);
+    devices.value = devices.value.filter((d) => d.id !== id);
+};
+
+const formatDate = (ts) =>
+    ts
+        ? new Date(ts).toLocaleDateString("en-CA", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+          })
+        : "Never";
+
+onMounted(() => {
+    fetchDevices();
+    fetchQuota();
+});
 </script>
 
 <template>
@@ -111,6 +209,88 @@ const deleteAccount = async () => {
             <button @click="saveDisplayName" :disabled="displayNameSaving">
                 {{ displayNameSaving ? "Saving…" : "Save" }}
             </button>
+
+            <div class="quota" v-if="!quotaLoading">
+                <div class="quota__label">
+                    <span>Artwork storage</span>
+                    <span>{{ quotaUsedMb }} MB / {{ quotaMb }} MB</span>
+                </div>
+                <div class="quota__bar">
+                    <div
+                        class="quota__fill"
+                        :style="{ width: quotaPercent + '%' }"
+                        :class="{
+                            'quota__fill--warning': quotaPercent >= 80,
+                            'quota__fill--full': quotaPercent >= 100,
+                        }"
+                    ></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Devices section -->
+        <section v-if="hasDevicesBeta" class="section">
+            <h2>Devices</h2>
+            <p class="section__description">
+                Generate a token to authenticate a MediaCrate randomizer. Each
+                token is shown once — save it somewhere safe.
+            </p>
+
+            <div class="field">
+                <label for="device_name">Device name</label>
+                <input
+                    id="device_name"
+                    v-model="newDeviceName"
+                    type="text"
+                    placeholder="e.g. Living room randomizer"
+                    @keydown.enter.prevent="generateToken"
+                />
+            </div>
+
+            <p v-if="deviceError" class="error">{{ deviceError }}</p>
+
+            <button
+                @click="generateToken"
+                :disabled="deviceLoading || !newDeviceName.trim()"
+            >
+                {{ deviceLoading ? "Generating…" : "Generate token" }}
+            </button>
+
+            <!-- New token display -->
+            <div v-if="newToken" class="token-reveal">
+                <p class="token-reveal__warning">
+                    ⚠ Copy this token now — it won't be shown again.
+                </p>
+                <div class="token-reveal__value">
+                    <code>{{ newToken }}</code>
+                    <button class="token-reveal__copy" @click="copyToken">
+                        {{ newTokenCopied ? "Copied!" : "Copy" }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Existing devices -->
+            <div v-if="devices.length > 0" class="devices-list">
+                <div
+                    v-for="device in devices"
+                    :key="device.id"
+                    class="device-row"
+                >
+                    <div class="device-row__info">
+                        <span class="device-row__name">{{ device.name }}</span>
+                        <span class="device-row__meta"
+                            >Last seen: {{ formatDate(device.last_seen) }}</span
+                        >
+                    </div>
+                    <button
+                        class="button--delete button--small"
+                        @click="deleteDevice(device.id)"
+                    >
+                        Revoke
+                    </button>
+                </div>
+            </div>
+            <p v-else class="empty">No devices registered yet.</p>
         </section>
 
         <!-- Danger zone -->
@@ -264,5 +444,125 @@ dialog {
     gap: 10px;
     margin-top: 20px;
     flex-wrap: wrap;
+}
+
+.section__description {
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+    opacity: 0.8;
+}
+
+.token-reveal {
+    margin-top: 16px;
+    padding: 12px;
+    background-color: rgba(orange, 0.08);
+    border: 1px solid rgba(orange, 0.3);
+    border-radius: 6px;
+
+    &__warning {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: orange;
+    }
+
+    &__value {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    code {
+        font-family: monospace;
+        font-size: 0.85rem;
+        word-break: break-all;
+        flex: 1;
+    }
+
+    &__copy {
+        flex-shrink: 0;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+    }
+}
+
+.devices-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.device-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    background-color: $secondary-muted;
+    border-radius: 6px;
+
+    &__info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__name {
+        font-weight: 500;
+    }
+
+    &__meta {
+        font-size: 0.78rem;
+        opacity: 0.6;
+    }
+}
+
+.button--small {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+}
+
+.quota {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba($secondary-lighter, 0.3);
+
+    &__label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        margin-bottom: 6px;
+        opacity: 0.8;
+    }
+
+    &__bar {
+        height: 6px;
+        background-color: rgba($secondary-lighter, 0.2);
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    &__fill {
+        height: 100%;
+        background-color: $secondary-lighter;
+        border-radius: 99px;
+        transition: width 0.3s ease;
+
+        &--warning {
+            background-color: orange;
+        }
+
+        &--full {
+            background-color: red;
+        }
+    }
+}
+
+.empty {
+    margin-top: 16px;
+    font-size: 0.875rem;
+    opacity: 0.6;
 }
 </style>

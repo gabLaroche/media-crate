@@ -51,7 +51,6 @@ export function useReleases() {
     // 1. Check if release already exists by discogs_master_id
     let releaseRow = null;
 
-    console.log(form);
     if (form.discogs_master_id) {
       const { data: existing } = await supabase
         .from("releases")
@@ -67,6 +66,24 @@ export function useReleases() {
       let artworkId = null;
 
       if (form.artwork_file) {
+        // Check quota before uploading
+        const { data: profile, error: profileErr } = await supabase
+          .from("profiles")
+          .select("used_bytes, upload_quota_mb")
+          .eq("id", user.value.id)
+          .single();
+
+        if (profileErr) throw profileErr;
+
+        const quotaBytes = (profile.upload_quota_mb ?? 50) * 1024 * 1024;
+        if (profile.used_bytes + form.artwork_file.size > quotaBytes) {
+          const usedMb = (profile.used_bytes / 1024 / 1024).toFixed(1);
+          const quotaMb = profile.upload_quota_mb ?? 50;
+          throw new Error(
+            `Storage quota exceeded (${usedMb} MB used of ${quotaMb} MB).`,
+          );
+        }
+
         // User uploaded a file — upload to Storage then insert into artworks
         const ext = form.artwork_file.name.split(".").pop();
         const filePath = `${user.value.id}/${crypto.randomUUID()}.${ext}`;
