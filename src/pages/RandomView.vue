@@ -1,10 +1,10 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { useMediaItems } from "@/composables/useMediaItems";
-import MediaItemCard from "@/components/MediaItemCard.vue";
+import { useReleases } from "@/composables/useReleases";
+import ReleaseCard from "@/components/ReleaseCard.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 
-const { fetchRandomAlbum, updateRecencyWindow } = useMediaItems();
+const { fetchRandomRelease, updateRecencyWindow } = useReleases();
 const current = ref(null);
 const isFetching = ref(false);
 
@@ -14,9 +14,9 @@ onMounted(async () => {
 
 const pick = async () => {
     isFetching.value = true;
-    const album = await fetchRandomAlbum();
-    if (album) {
-        current.value = album;
+    const release = await fetchRandomRelease();
+    if (release) {
+        current.value = release;
     }
     isFetching.value = false;
 };
@@ -25,14 +25,14 @@ const pick = async () => {
 <template>
     <div>
         <h1>Random Pick</h1>
-        <button @click="pick">Pick Media item</button>
+        <button @click="pick">Pick Release</button>
 
         <LoadingSpinner v-if="isFetching" />
 
-        <div class="media-item-container">
-            <MediaItemCard
+        <div class="release-container">
+            <ReleaseCard
                 v-if="current"
-                :media-item="current"
+                :release="current"
                 :show-buttons="false"
             />
         </div>
@@ -40,7 +40,7 @@ const pick = async () => {
 </template>
 
 <style scoped>
-.media-item-container {
+.release-container {
     margin-top: 20px;
 }
 </style>

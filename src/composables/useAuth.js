@@ -13,6 +13,13 @@ export function useAuth() {
     });
   };
 
+  const signUp = (email, password, displayName) =>
+    supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: displayName } },
+    });
+
   const login = (email, password) =>
     supabase.auth.signInWithPassword({ email, password });
 
@@ -22,5 +29,5 @@ export function useAuth() {
 
   const updatePassword = (password) => supabase.auth.updateUser({ password });
 
-  return { user, init, login, logout, resetPassword, updatePassword };
+  return { user, init, signUp, login, logout, resetPassword, updatePassword };
 }

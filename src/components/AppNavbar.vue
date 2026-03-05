@@ -1,22 +1,14 @@
 <script setup>
-import { useAuth } from "@/composables/useAuth";
-import { useRouter } from "vue-router";
-const router = useRouter();
-const { logout } = useAuth();
-
-const onLogout = async () => {
-    await logout();
-    router.push({ path: "/login" });
-};
+import AccountMenu from "@/components/AccountMenu.vue";
 </script>
 
 <template>
     <nav class="navbar">
         <router-link to="/">Collection</router-link>
-        <router-link to="/random">Random</router-link>
         <router-link to="/add">Add</router-link>
-
-        <button @click="onLogout">Logout</button>
+        <router-link to="/bulk-add">Bulk Add</router-link>
+        <router-link to="/random">Random</router-link>
+        <AccountMenu />
     </nav>
 </template>
 
@@ -30,10 +22,6 @@ const onLogout = async () => {
 
     a {
         font-weight: bold;
-    }
-
-    button {
-        margin-left: auto;
     }
 }
 </style>

@@ -1,12 +1,12 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { RiCloseLine } from "@remixicon/vue";
-import { useMediaItems } from "@/composables/useMediaItems";
-const { mediaItem, showButtons } = defineProps(["mediaItem", "showButtons"]);
-const { deleteMediaItem } = useMediaItems();
+import { useReleases } from "@/composables/useReleases";
+const { release, showButtons } = defineProps(["release", "showButtons"]);
+const { deleteRelease } = useReleases();
 
-const acquiredDate = new Date(mediaItem.acquired_date).toLocaleDateString(
+const acquiredDate = new Date(release.acquired_date).toLocaleDateString(
     "en-CA",
     {
         year: "numeric",
@@ -21,12 +21,12 @@ const deleteConfirmRef = ref(null);
 const router = useRouter();
 
 const goToEditPage = () => {
-    router.push(`/edit/${mediaItem.id}`);
+    router.push(`/edit/${release.id}`);
 };
 
 const deleteItem = () => {
-    deleteMediaItem(mediaItem.id).then(() => {
-        emit("deleted", mediaItem.id);
+    deleteRelease(release.id).then(() => {
+        emit("deleted", release.id);
         deleteConfirmRef.value.close();
     });
 };
@@ -38,22 +38,26 @@ const onDialogClick = (e) => {
         deleteConfirmRef.value.close();
     }
 };
+
+onMounted(() => {
+    console.log("mounted", release);
+});
 </script>
 
 <template>
     <div class="card">
         <img
-            v-if="mediaItem.artwork_url"
-            :src="mediaItem.artwork_url"
+            v-if="release.artwork_url"
+            :src="release.artwork_url"
             width="80"
             height="80"
         />
         <img v-else src="/No_Image_Available.jpg" width="80" height="80" />
 
         <div>
-            <strong>{{ mediaItem.album_name }}</strong>
-            <div>By: {{ mediaItem.artist }}</div>
-            <div>Released: {{ mediaItem.release_date }}</div>
+            <strong>{{ release.album_name }}</strong>
+            <div>By: {{ release.artist }}</div>
+            <div>Released: {{ release.release_date }}</div>
             <div>
                 Acquired:
                 {{ acquiredDate }}
@@ -65,13 +69,13 @@ const onDialogClick = (e) => {
             <button
                 class="button--delete"
                 command="show-modal"
-                :commandfor="`delete-confirm-${mediaItem.id}`"
+                :commandfor="`delete-confirm-${release.id}`"
             >
                 Delete
             </button>
 
             <dialog
-                :id="`delete-confirm-${mediaItem.id}`"
+                :id="`delete-confirm-${release.id}`"
                 ref="deleteConfirmRef"
                 @click.self="onDialogClick"
             >
@@ -82,8 +86,8 @@ const onDialogClick = (e) => {
                     />
                     <p>
                         Are you sure you want to delete
-                        <strong>{{ mediaItem.album_name }}</strong> by
-                        <strong>{{ mediaItem.artist }}</strong
+                        <strong>{{ release.album_name }}</strong> by
+                        <strong>{{ release.artist }}</strong
                         >?
                     </p>
                     <div class="buttons">
@@ -91,7 +95,7 @@ const onDialogClick = (e) => {
                             Yes
                         </button>
                         <button
-                            :commandfor="`delete-confirm-${mediaItem.id}`"
+                            :commandfor="`delete-confirm-${release.id}`"
                             command="close"
                         >
                             No

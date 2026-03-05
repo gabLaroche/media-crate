@@ -1,19 +1,19 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useMediaItems } from "@/composables/useMediaItems";
-import MediaItemForm from "@/components/MediaItemForm.vue";
+import { useReleases } from "@/composables/useReleases";
+import ReleaseForm from "@/components/ReleaseForm.vue";
 
 const props = defineProps({
     id: String, // from router
 });
 
-const { fetchOne } = useMediaItems();
+const { fetchOne } = useReleases();
 const router = useRouter();
 
-const mediaItem = ref(null);
+const release = ref(null);
 
-const fetchMediaItem = async () => {
+const fetchRelease = async () => {
     const item = await fetchOne(props.id);
 
     if (!item) {
@@ -21,10 +21,10 @@ const fetchMediaItem = async () => {
         return;
     }
 
-    mediaItem.value = item;
+    release.value = item;
 };
 
-onMounted(fetchMediaItem);
+onMounted(fetchRelease);
 
 const onSubmitted = () => {
     router.push({ name: "collection" });
@@ -33,7 +33,7 @@ const onSubmitted = () => {
 
 <template>
     <div>
-        <h1>Edit Media item</h1>
-        <MediaItemForm :media-item="mediaItem" @submitted="onSubmitted" />
+        <h1>Edit Release</h1>
+        <ReleaseForm :release="release" @submitted="onSubmitted" />
     </div>
 </template>

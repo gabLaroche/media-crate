@@ -1,28 +1,28 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
-import { useMediaItems } from "@/composables/useMediaItems";
+import { useReleases } from "@/composables/useReleases";
 import { RiArrowUpLine, RiArrowDownLine, RiLoader4Line } from "@remixicon/vue";
-import MediaItemCard from "./MediaItemCard.vue";
+import ReleaseCard from "./ReleaseCard.vue";
 
-const { mediaItems, fetchAll, sortMediaItems } = useMediaItems();
+const { releases, fetchAll, sortReleases } = useReleases();
 const ascending = ref(true);
 const sortState = ref("acquired_date");
 const isFetching = ref(true);
 
 const handleDelete = (id) => {
-    mediaItems.value = mediaItems.value.filter((item) => item.id !== id);
+    releases.value = releases.value.filter((item) => item.id !== id);
 };
 
 watch(sortState, () => {
     isFetching.value = true;
-    sortMediaItems(sortState.value, ascending.value).finally(() => {
+    sortReleases(sortState.value, ascending.value).finally(() => {
         isFetching.value = false;
     });
 });
 
 watch(ascending, () => {
     isFetching.value = true;
-    sortMediaItems(sortState.value, ascending.value).finally(() => {
+    sortReleases(sortState.value, ascending.value).finally(() => {
         isFetching.value = false;
     });
 });
@@ -35,15 +35,16 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="media-item-list">
+    <div class="release-list">
         <p>
-            You have <strong>{{ mediaItems.length }}</strong>
-            {{ mediaItems.length > 1 ? "albums" : "album" }} in your collection
+            You have <strong>{{ releases.length }}</strong>
+            {{ releases.length > 1 ? "releases" : "release" }} in your
+            collection
         </p>
         <div class="sort-buttons">
             <h2>Sort by:</h2>
             <div>
-                <label for="album_name">Album Name:</label>
+                <label for="album_name">Release Name:</label>
                 <input
                     type="radio"
                     id="album_name"
@@ -93,12 +94,12 @@ onMounted(() => {
                 </button>
             </div>
         </div>
-        <div v-if="isFetching" class="media-item-list"></div>
-        <div v-if="mediaItems.length > 0" class="media-item-list">
-            <MediaItemCard
-                v-for="mediaItem in mediaItems"
-                :key="mediaItem.id"
-                :media-item="mediaItem"
+        <div v-if="isFetching" class="release-list"></div>
+        <div v-if="releases.length > 0" class="release-list">
+            <ReleaseCard
+                v-for="release in releases"
+                :key="release.id"
+                :release="release"
                 :show-buttons="true"
                 @deleted="handleDelete"
             />
@@ -131,7 +132,7 @@ onMounted(() => {
     justify-content: center;
 }
 
-.media-item-list {
+.release-list {
     display: flex;
     flex-direction: column;
     gap: 8px;

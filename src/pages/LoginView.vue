@@ -11,13 +11,12 @@ const error = ref(null);
 const router = useRouter();
 
 const submit = async () => {
-    const { error: err } = await login(email.value, password.value)
-        .then(() => {
-            router.push({ path: "/" });
-        })
-        .catch(() => {
-            error.value = err?.message;
-        });
+    try {
+        await login(email.value, password.value);
+        router.push({ path: "/" });
+    } catch (err) {
+        error.value = err?.message;
+    }
 };
 </script>
 
@@ -31,7 +30,14 @@ const submit = async () => {
             <input id="email" v-model="email" type="email" />
             <label for="password">Password:</label>
             <input id="password" v-model="password" type="password" />
+            <router-link to="/reset-password"
+                >Forgot your password?</router-link
+            >
             <button>Login</button>
+            <p>
+                No account?
+                <router-link to="/create-account">Sign up here.</router-link>
+            </p>
         </form>
 
         <p v-if="error">{{ error }}</p>

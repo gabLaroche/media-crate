@@ -12,6 +12,10 @@ body {
     background-color: $primary-lighter;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 /* Lato 300 */
 @font-face {
     font-family: "Lato";
@@ -114,6 +118,32 @@ button:disabled {
 
         &:hover {
             background-color: $danger-dark;
+        }
+    }
+
+    &--link-style {
+        color: $primary;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+
+        &:hover {
+            color: $primary-dark;
+            background-color: transparent;
+        }
+    }
+
+    &--field-icon {
+        padding: 0;
+        color: $primary;
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+
+        &:hover {
+            color: $primary-dark;
+            background-color: transparent;
         }
     }
 }

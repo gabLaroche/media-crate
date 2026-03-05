@@ -1,10 +1,10 @@
 <script setup>
-import MediaItemList from "@/components/MediaItemList.vue";
+import ReleaseList from "@/components/ReleaseList.vue";
 </script>
 
 <template>
     <div>
         <h1>My Collection</h1>
-        <MediaItemList />
+        <ReleaseList />
     </div>
 </template>

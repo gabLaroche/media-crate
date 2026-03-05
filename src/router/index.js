@@ -15,7 +15,46 @@ const router = createRouter({
           path: "",
           component: () => import("@/pages/LoginView.vue"),
           meta: {
-            title: "Login | My music collection",
+            title: "Login | MediaCrate",
+          },
+        },
+      ],
+    },
+    {
+      path: "/confirm-sign-up",
+      component: AuthLayout,
+      children: [
+        {
+          path: "",
+          component: () => import("@/pages/ConfirmSignUpView.vue"),
+          meta: {
+            title: "Confirm Sign Up | MediaCrate",
+          },
+        },
+      ],
+    },
+    {
+      path: "/check-email",
+      component: AuthLayout,
+      children: [
+        {
+          path: "",
+          component: () => import("@/pages/CheckEmailView.vue"),
+          meta: {
+            title: "Reset Password | MediaCrate",
+          },
+        },
+      ],
+    },
+    {
+      path: "/create-account",
+      component: AuthLayout,
+      children: [
+        {
+          path: "",
+          component: () => import("@/pages/CreateAccountView.vue"),
+          meta: {
+            title: "Create Account | MediaCrate",
           },
         },
       ],
@@ -28,7 +67,7 @@ const router = createRouter({
           path: "",
           component: () => import("@/pages/ResetPasswordView.vue"),
           meta: {
-            title: "Reset Password | My music collection",
+            title: "Reset Password | MediaCrate",
           },
         },
       ],
@@ -41,7 +80,20 @@ const router = createRouter({
           path: "",
           component: () => import("@/pages/UpdatePasswordView.vue"),
           meta: {
-            title: "Update Password | My music collection",
+            title: "Update Password | MediaCrate",
+          },
+        },
+      ],
+    },
+    {
+      path: "/account",
+      component: MainLayout,
+      children: [
+        {
+          path: "",
+          component: () => import("@/pages/AccountView.vue"),
+          meta: {
+            title: "My account | MediaCrate",
           },
         },
       ],
@@ -58,24 +110,32 @@ const router = createRouter({
           name: "collection",
           component: () => import("@/pages/CollectionView.vue"),
           meta: {
-            title: "My music collection",
+            title: "MediaCrate",
           },
         },
         {
           path: "add",
           name: "add",
-          component: () => import("@/pages/AddMediaItemView.vue"),
+          component: () => import("@/pages/AddReleaseView.vue"),
           meta: {
-            title: "Add media item | My music collection",
+            title: "Add release | MediaCrate",
+          },
+        },
+        {
+          path: "bulk-add",
+          name: "bulk-add",
+          component: () => import("@/pages/BulkAddReleaseView.vue"),
+          meta: {
+            title: "Bulk add releases | MediaCrate",
           },
         },
         {
           path: "edit/:id",
           name: "edit",
-          component: () => import("@/pages/EditMediaItemView.vue"),
+          component: () => import("@/pages/EditReleaseView.vue"),
           props: true,
           meta: {
-            title: "Edit media item | My music collection",
+            title: "Edit release | MediaCrate",
           },
         },
         {
@@ -83,7 +143,7 @@ const router = createRouter({
           name: "random",
           component: () => import("@/pages/RandomView.vue"),
           meta: {
-            title: "Random media item | My music collection",
+            title: "Random release | MediaCrate",
           },
         },
       ],
@@ -92,7 +152,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
-  document.title = to.meta.title || "My music collection";
+  document.title = to.meta.title || "MediaCrate";
 
   const { data } = await supabase.auth.getSession();
   const loggedIn = !!data.session;

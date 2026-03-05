@@ -12,7 +12,7 @@ const router = useRouter();
 const submit = async () => {
     const { error: err } = await resetPassword(email.value)
         .then(() => {
-            router.push({ path: "/" });
+            router.push({ path: "/check-email" });
         })
         .catch(() => {
             error.value = err?.message;
