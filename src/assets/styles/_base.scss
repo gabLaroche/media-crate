@@ -1,0 +1,130 @@
+@use "variables" as *;
+@use "fonts";
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 62.5%; // 1rem = 10px (62.5% of default 16px)
+}
+
+// ─── Body ─────────────────────────────────────────────────────────────────────
+
+body {
+    font-family: "Lato", sans-serif;
+    margin: 0;
+    padding: 1.6rem;
+    background-color: $primary-lighter;
+}
+
+// ─── Typography ───────────────────────────────────────────────────────────────
+
+label {
+    font-weight: bold;
+}
+
+a:link,
+a:visited {
+    color: $primary;
+    text-decoration: none;
+    transition: all $transition;
+}
+
+a:hover,
+a:active {
+    color: $primary-dark;
+}
+
+img {
+    border-radius: 4px;
+    max-width: 100%;
+    height: auto;
+}
+
+// ─── Forms ────────────────────────────────────────────────────────────────────
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+}
+
+input,
+select,
+textarea {
+    background-color: $neutral-white;
+    padding: 0.5rem;
+    border: 1px solid $neutral-light;
+    border-radius: 4px;
+}
+
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+
+button {
+    padding: 0.5rem 1rem;
+    background-color: $primary;
+    color: $neutral-white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all $transition;
+
+    &:hover {
+        background-color: $primary-dark;
+    }
+
+    &:disabled {
+        background-color: $neutral-mid;
+        color: $neutral-white;
+        cursor: not-allowed;
+    }
+}
+
+.button {
+    &--delete {
+        background-color: $danger;
+
+        &:hover {
+            background-color: $danger-dark;
+        }
+    }
+
+    &--outline {
+        background-color: transparent;
+        border: 1px solid $primary;
+        color: $primary;
+
+        &:hover {
+            color: $neutral-white;
+            background-color: $primary-dark;
+        }
+    }
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+.optional {
+    color: $neutral-mid;
+    font-size: 0.8em;
+    margin-left: 0.5rem;
+}
+
+.field-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.5rem;
+
+    &--checkbox {
+        align-items: center;
+        flex-direction: row;
+
+        input {
+            width: 1.6rem;
+            height: 1.6rem;
+        }
+    }
+}

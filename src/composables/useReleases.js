@@ -3,9 +3,9 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
 
 const releases = ref([]);
+
 export function useReleases() {
   const flattenCollection = (item) => ({
-    // collection fields
     id: item.id,
     user_id: item.user_id,
     release_id: item.release_id,
@@ -16,12 +16,10 @@ export function useReleases() {
     media_type: item.media_type,
     exclude_from_randomizer: item.exclude_from_randomizer,
     created_at: item.created_at,
-    // release fields (flattened)
     album_name: item.release?.title,
     artist: item.release?.artist,
     release_date: item.release?.year,
     discogs_master_id: item.release?.discogs_master_id,
-    // artwork
     artwork_url: item.release?.artwork?.url ?? null,
     artwork_file_path: item.release?.artwork?.file_path ?? null,
   });
@@ -43,10 +41,72 @@ export function useReleases() {
     return data ? flattenCollection(data) : null;
   };
 
+  // --- Shared artwork upload helper ---
+  const uploadArtwork = async (file, hash, userId) => {
+    // 1. Check if identical image already exists by hash
+    if (hash) {
+      const { data: existingArtwork } = await supabase
+        .from("artworks")
+        .select("id, url")
+        .eq("hash", hash)
+        .maybeSingle();
+
+      if (existingArtwork) return existingArtwork.url;
+    }
+
+    // 2. Check quota before uploading
+    const { data: profile, error: profileErr } = await supabase
+      .from("profiles")
+      .select("used_bytes, upload_quota_mb")
+      .eq("id", userId)
+      .single();
+
+    if (profileErr) throw profileErr;
+
+    const quotaBytes = (profile.upload_quota_mb ?? 50) * 1024 * 1024;
+    if (profile.used_bytes + file.size > quotaBytes) {
+      const usedMb = (profile.used_bytes / 1024 / 1024).toFixed(1);
+      const quotaMb = profile.upload_quota_mb ?? 50;
+      throw new Error(
+        `Storage quota exceeded (${usedMb} MB used of ${quotaMb} MB).`,
+      );
+    }
+
+    // 3. Upload to Storage
+    const ext = file.name.split(".").pop();
+    const filePath = `${userId}/${crypto.randomUUID()}.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from("artworks")
+      .upload(filePath, file, { contentType: file.type });
+
+    if (uploadErr) throw uploadErr;
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("artworks").getPublicUrl(filePath);
+
+    // 4. Insert into artworks table
+    const { data: artworkRow, error: artworkErr } = await supabase
+      .from("artworks")
+      .insert({
+        file_path: filePath,
+        url: publicUrl,
+        size_bytes: file.size,
+        hash: hash ?? null,
+        owner_user_id: userId,
+      })
+      .select("id, url")
+      .single();
+
+    if (artworkErr) throw artworkErr;
+
+    return artworkRow.url;
+  };
+
   const addRelease = async (form) => {
     const { user } = useAuth();
 
-    // 1. Check if release already exists by discogs_master_id
     let releaseRow = null;
 
     if (form.discogs_master_id) {
@@ -59,60 +119,23 @@ export function useReleases() {
       if (existing) releaseRow = existing;
     }
 
-    // 2. If release doesn't exist, handle artwork then insert release
     if (!releaseRow) {
       let artworkId = null;
 
       if (form.artwork_file) {
-        // Check quota before uploading
-        const { data: profile, error: profileErr } = await supabase
-          .from("profiles")
-          .select("used_bytes, upload_quota_mb")
-          .eq("id", user.value.id)
-          .single();
-
-        if (profileErr) throw profileErr;
-
-        const quotaBytes = (profile.upload_quota_mb ?? 50) * 1024 * 1024;
-        if (profile.used_bytes + form.artwork_file.size > quotaBytes) {
-          const usedMb = (profile.used_bytes / 1024 / 1024).toFixed(1);
-          const quotaMb = profile.upload_quota_mb ?? 50;
-          throw new Error(
-            `Storage quota exceeded (${usedMb} MB used of ${quotaMb} MB).`,
-          );
-        }
-
-        // User uploaded a file — upload to Storage then insert into artworks
-        const ext = form.artwork_file.name.split(".").pop();
-        const filePath = `${user.value.id}/${crypto.randomUUID()}.${ext}`;
-
-        const { error: uploadErr } = await supabase.storage
+        const url = await uploadArtwork(
+          form.artwork_file,
+          form.artwork_hash,
+          user.value.id,
+        );
+        // Fetch the artwork id by url to store as FK
+        const { data: artworkRow } = await supabase
           .from("artworks")
-          .upload(filePath, form.artwork_file, {
-            contentType: form.artwork_file.type,
-          });
-
-        if (uploadErr) throw uploadErr;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("artworks").getPublicUrl(filePath);
-
-        const { data: artworkRow, error: artworkErr } = await supabase
-          .from("artworks")
-          .insert({
-            file_path: filePath,
-            url: publicUrl,
-            size_bytes: form.artwork_file.size,
-            owner_user_id: user.value.id,
-          })
           .select("id")
-          .single();
-
-        if (artworkErr) throw artworkErr;
-        artworkId = artworkRow.id;
+          .eq("url", url)
+          .maybeSingle();
+        if (artworkRow) artworkId = artworkRow.id;
       } else if (form.artwork_url) {
-        // Discogs URL — store directly
         const { data: artworkRow, error: artworkErr } = await supabase
           .from("artworks")
           .insert({
@@ -142,7 +165,6 @@ export function useReleases() {
       releaseRow = newRelease;
     }
 
-    // 3. Insert into collections (per-user)
     const { error: collErr } = await supabase.from("collections").insert({
       user_id: user.value.id,
       release_id: releaseRow.id,
@@ -261,5 +283,6 @@ export function useReleases() {
     fetchRandomRelease,
     sortReleases,
     bulkAddReleases,
+    uploadArtwork,
   };
 }

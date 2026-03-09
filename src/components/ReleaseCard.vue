@@ -52,7 +52,7 @@ onMounted(() => {
             width="80"
             height="80"
         />
-        <img v-else src="/No_Image_Available.jpg" width="80" height="80" />
+        <img v-else src="/No_Image_Available.png" width="80" height="80" />
 
         <div>
             <strong>{{ release.album_name }}</strong>
@@ -111,8 +111,8 @@ onMounted(() => {
 .card {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 10px;
+    gap: 1.6rem;
+    padding: 1rem;
     background-color: $primary-muted;
     border-radius: 8px;
 
@@ -124,7 +124,7 @@ onMounted(() => {
 
 .buttons {
     display: flex;
-    gap: 10px;
+    gap: 1rem;
     width: 100%;
 
     @media screen and (min-width: 768px) {
@@ -154,13 +154,13 @@ dialog {
     border-radius: 8px;
     border: 1px solid $secondary-lighter;
     max-width: 400px;
-    padding: 20px;
+    padding: 2rem;
     position: relative;
 
     .close-icon {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 1rem;
+        right: 1rem;
         color: $primary-dark;
         cursor: pointer;
 

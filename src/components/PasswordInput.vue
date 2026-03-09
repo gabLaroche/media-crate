@@ -111,12 +111,12 @@ watch(isPasswordValid, (val) => {
 .password-input {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0.8rem;
 
     &__field-container {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 0.8rem;
     }
 
     &__field {

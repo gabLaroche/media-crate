@@ -9,7 +9,7 @@ const headers = {
 export async function searchRelease({ artist }) {
   const params = new URLSearchParams({
     artist,
-    type: "master",
+    type: "release",
   });
   const res = await fetch(`${BASE_URL}/database/search?${params}`, { headers });
   if (!res.ok) throw new Error("Discogs search failed");

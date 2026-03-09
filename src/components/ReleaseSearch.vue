@@ -1,34 +1,52 @@
 <script setup>
 import { ref, computed } from "vue";
-import { RiCheckLine } from "@remixicon/vue";
 import { searchRelease } from "@/lib/discogs";
 import { cleanTitle } from "@/lib/cleanTitle";
+import { supabase } from "@/lib/supabase";
 
 const props = defineProps(["selectedIds"]);
 const emit = defineEmits(["selected", "deselected"]);
 
 const artist = ref("");
-const releaseFilter = ref("");
+const albumFilter = ref("");
 const countryFilter = ref("");
 const results = ref([]);
 const loading = ref(false);
 const hasSearched = ref(false);
 
+// Normalise a local DB release into the same shape as a Discogs result
+const normalizeLocalRelease = (r) => ({
+    id: `local_${r.id}`, // namespaced so it never collides with a Discogs int ID
+    _source: "local",
+    _local_id: r.id,
+    title: `${r.artist} - ${r.title}`,
+    year: r.year,
+    cover_image: r.artworks?.url ?? null,
+    country: null,
+    discogs_master_id: null,
+});
+
 const availableCountries = computed(() => {
-    const countries = results.value.map((r) => r.country).filter(Boolean);
+    const countries = results.value
+        .filter((r) => r._source !== "local")
+        .map((r) => r.country)
+        .filter(Boolean);
     return [...new Set(countries)].sort();
 });
 
 const filteredResults = computed(() => {
     return results.value.filter((r) => {
-        const matchesRelease =
-            !releaseFilter.value.trim() ||
+        const matchesAlbum =
+            !albumFilter.value.trim() ||
             cleanTitle(r.title)
                 .toLowerCase()
-                .includes(releaseFilter.value.toLowerCase());
+                .includes(albumFilter.value.toLowerCase());
+        // Local results are never filtered by country
         const matchesCountry =
-            !countryFilter.value || r.country === countryFilter.value;
-        return matchesRelease && matchesCountry;
+            r._source === "local" ||
+            !countryFilter.value ||
+            r.country === countryFilter.value;
+        return matchesAlbum && matchesCountry;
     });
 });
 
@@ -39,12 +57,41 @@ const search = async () => {
     loading.value = true;
     hasSearched.value = false;
     results.value = [];
-    releaseFilter.value = "";
+    albumFilter.value = "";
     countryFilter.value = "";
-    const data = await searchRelease({ artist: artist.value });
-    results.value = data.results || [];
+
+    // Fire both searches in parallel
+    const [discogsData, localData] = await Promise.allSettled([
+        searchRelease({ artist: artist.value }),
+        supabase
+            .from("releases")
+            .select("id, title, artist, year, artworks(url)")
+            .is("discogs_master_id", null)
+            .or(`title.ilike.%${artist.value}%,artist.ilike.%${artist.value}%`),
+    ]);
+
+    const discogsResults =
+        discogsData.status === "fulfilled"
+            ? discogsData.value.results || []
+            : [];
+
+    const localResults =
+        localData.status === "fulfilled"
+            ? (localData.value.data || []).map(normalizeLocalRelease)
+            : [];
+
+    // Local results first, then Discogs
+    results.value = [...localResults, ...discogsResults];
     loading.value = false;
     hasSearched.value = true;
+};
+
+const clear = () => {
+    results.value = [];
+    artist.value = "";
+    albumFilter.value = "";
+    countryFilter.value = "";
+    hasSearched.value = false;
 };
 
 const selectRelease = (r) => {
@@ -55,20 +102,12 @@ const selectRelease = (r) => {
     }
 };
 
-const clear = () => {
-    artist.value = "";
-    releaseFilter.value = "";
-    countryFilter.value = "";
-    results.value = [];
-    hasSearched.value = false;
-};
-
 defineExpose({ clear });
 </script>
 
 <template>
-    <div class="discogs-search">
-        <h3>Search Discogs</h3>
+    <div class="release-search">
+        <h3>Search</h3>
 
         <div class="search">
             <input
@@ -88,9 +127,9 @@ defineExpose({ clear });
         <template v-if="hasSearched">
             <div v-if="results.length > 0" class="filters">
                 <input
-                    v-model="releaseFilter"
-                    class="release-filter"
-                    placeholder="Filter releases…"
+                    v-model="albumFilter"
+                    class="album-filter"
+                    placeholder="Filter albums…"
                 />
                 <select v-model="countryFilter" class="country-filter">
                     <option value="">All countries</option>
@@ -107,10 +146,24 @@ defineExpose({ clear });
                     v-for="r in filteredResults"
                     :key="r.id"
                     class="result"
-                    :class="{ 'result--selected': isSelected(r) }"
+                    :class="{
+                        'result--selected': isSelected(r),
+                        'result--local': r._source === 'local',
+                    }"
                     @click="selectRelease(r)"
                 >
-                    <img v-if="r.cover_image" :src="r.cover_image" width="50" />
+                    <img
+                        v-if="r.cover_image"
+                        :src="r.cover_image"
+                        width="50"
+                        height="50"
+                        style="
+                            object-fit: cover;
+                            border-radius: 3px;
+                            flex-shrink: 0;
+                        "
+                    />
+                    <div v-else class="result__art-placeholder" />
                     <div class="result__info">
                         <span class="result__title">{{
                             cleanTitle(r.title)
@@ -122,8 +175,10 @@ defineExpose({ clear });
                             r.country
                         }}</span>
                     </div>
-                    <RiCheckLine v-if="isSelected(r)" />
-                    <!-- <span class="result__check">✓</span> -->
+                    <span v-if="r._source === 'local'" class="result__badge"
+                        >Library</span
+                    >
+                    <span v-if="isSelected(r)" class="result__check">✓</span>
                 </div>
             </div>
         </template>
@@ -131,7 +186,7 @@ defineExpose({ clear });
 </template>
 
 <style lang="scss" scoped>
-.discogs-search {
+.release-search {
     margin-bottom: 20px;
 
     .search {
@@ -148,10 +203,9 @@ defineExpose({ clear });
         display: flex;
         gap: 10px;
         margin-top: 10px;
-        flex-wrap: wrap;
     }
 
-    .release-filter {
+    .album-filter {
         flex: 1;
     }
 
@@ -187,11 +241,25 @@ defineExpose({ clear });
             }
         }
 
+        &--local {
+            border-left: 2px solid $secondary-lighter;
+            padding-left: 8px;
+        }
+
+        &__art-placeholder {
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
+            border-radius: 3px;
+            background: rgba($secondary-lighter, 0.15);
+        }
+
         &__info {
             flex: 1;
             display: flex;
             gap: 6px;
             align-items: baseline;
+            flex-wrap: wrap;
         }
 
         &__title {
@@ -208,6 +276,17 @@ defineExpose({ clear });
             color: #aaa;
             margin-left: auto;
             white-space: nowrap;
+        }
+
+        &__badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba($secondary-lighter, 0.15);
+            color: $secondary-lighter;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         &__check {

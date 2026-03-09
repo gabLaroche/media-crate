@@ -60,14 +60,14 @@ const displayName = computed(
     color: inherit;
 
     svg {
-        width: 24px;
-        height: 24px;
+        width: 2.4rem;
+        height: 2.4rem;
     }
 }
 
 .account-popover {
     border: transparent;
-    padding: 16px;
+    padding: 1.6rem;
     position: absolute;
     inset: unset;
     top: 70px;
@@ -77,19 +77,19 @@ const displayName = computed(
     &__display-name,
     &__logout,
     a {
-        font-size: 1rem;
+        font-size: 1.6rem;
     }
 
     &__container {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 1.6rem;
     }
 
     &__logout {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 0.75rem;
         text-align: left;
     }
 }

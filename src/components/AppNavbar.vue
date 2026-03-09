@@ -16,8 +16,8 @@ import AccountMenu from "@/components/AccountMenu.vue";
 .navbar {
     align-items: center;
     display: flex;
-    gap: 20px;
-    padding: 12px;
+    gap: 2rem;
+    padding: 1.2rem;
     border-bottom: 1px solid #ddd;
 
     a {

@@ -41,6 +41,6 @@ const pick = async () => {
 
 <style scoped>
 .release-container {
-    margin-top: 20px;
+    margin-top: 2rem;
 }
 </style>

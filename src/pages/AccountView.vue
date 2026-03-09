@@ -359,22 +359,22 @@ onMounted(() => {
 .account-page {
     max-width: 540px;
     margin: 0 auto;
-    padding: 32px 16px;
+    padding: 3.2rem 1.6rem;
 
     h1 {
-        margin-bottom: 32px;
+        margin-bottom: 3.2rem;
     }
 }
 
 .section {
     background-color: $primary-muted;
     border-radius: 8px;
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 2.4rem;
+    margin-bottom: 2.4rem;
 
     h2 {
         margin-top: 0;
-        margin-bottom: 20px;
+        margin-bottom: 2rem;
     }
 
     &--danger {
@@ -385,7 +385,7 @@ onMounted(() => {
         }
 
         p {
-            margin-bottom: 16px;
+            margin-bottom: 1.6rem;
         }
     }
 }
@@ -393,8 +393,8 @@ onMounted(() => {
 .field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
+    gap: 0.5rem;
+    margin-bottom: 1.6rem;
 
     label {
         font-size: 0.875rem;
@@ -405,13 +405,13 @@ onMounted(() => {
 .error {
     color: red;
     font-size: 0.875rem;
-    margin-bottom: 12px;
+    margin-bottom: 1.2rem;
 }
 
 .success {
     color: green;
     font-size: 0.875rem;
-    margin-bottom: 12px;
+    margin-bottom: 1.2rem;
 }
 
 dialog {
@@ -428,33 +428,33 @@ dialog {
     border-radius: 8px;
     border: 1px solid $secondary-lighter;
     max-width: 420px;
-    padding: 24px;
+    padding: 2.4rem;
 
     h3 {
         margin-top: 0;
     }
 
     p {
-        margin-bottom: 16px;
+        margin-bottom: 1.6rem;
     }
 }
 
 .dialog-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 1rem;
+    margin-top: 2.4rem;
     flex-wrap: wrap;
 }
 
 .section__description {
     font-size: 0.875rem;
-    margin-bottom: 16px;
+    margin-bottom: 1.6rem;
     opacity: 0.8;
 }
 
 .token-reveal {
-    margin-top: 16px;
-    padding: 12px;
+    margin-top: 1.6rem;
+    padding: 1.2rem;
     background-color: rgba(orange, 0.08);
     border: 1px solid rgba(orange, 0.3);
     border-radius: 6px;
@@ -462,14 +462,14 @@ dialog {
     &__warning {
         font-size: 0.875rem;
         font-weight: 600;
-        margin-bottom: 8px;
+        margin-bottom: 0.8rem;
         color: orange;
     }
 
     &__value {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 1rem;
         flex-wrap: wrap;
     }
 
@@ -482,24 +482,24 @@ dialog {
 
     &__copy {
         flex-shrink: 0;
-        padding: 4px 10px;
+        padding: 0.5rem 1rem;
         font-size: 0.8rem;
     }
 }
 
 .devices-list {
-    margin-top: 20px;
+    margin-top: 2rem;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0.8rem;
 }
 
 .device-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: 1.2rem;
+    padding: 1rem 1.2rem;
     background-color: $secondary-muted;
     border-radius: 6px;
 
@@ -520,20 +520,20 @@ dialog {
 }
 
 .button--small {
-    padding: 4px 10px;
+    padding: 0.5rem 1rem;
     font-size: 0.8rem;
 }
 
 .quota {
-    margin-top: 24px;
-    padding-top: 20px;
+    margin-top: 2.4rem;
+    padding-top: 2.4rem;
     border-top: 1px solid rgba($secondary-lighter, 0.3);
 
     &__label {
         display: flex;
         justify-content: space-between;
         font-size: 0.875rem;
-        margin-bottom: 6px;
+        margin-bottom: 0.6rem;
         opacity: 0.8;
     }
 
@@ -561,7 +561,7 @@ dialog {
 }
 
 .empty {
-    margin-top: 16px;
+    margin-top: 1.6rem;
     font-size: 0.875rem;
     opacity: 0.6;
 }

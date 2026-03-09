@@ -118,7 +118,7 @@ onMounted(() => {
 .sort-buttons {
     align-items: center;
     display: flex;
-    gap: 10px;
+    gap: 1rem;
     flex-wrap: wrap;
 }
 
@@ -135,14 +135,14 @@ onMounted(() => {
 .sort-order button {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 1rem;
     justify-content: center;
 }
 
 .release-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 1rem;
     justify-content: center;
 }
 </style>
