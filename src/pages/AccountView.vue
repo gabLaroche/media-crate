@@ -1,44 +1,56 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
+import { vMaska } from "maska/vue";
+import { RiFileCopyLine } from "@remixicon/vue";
 import { useRouter } from "vue-router";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
 
-const { user, logout } = useAuth();
+const { user, logout, updateProfile } = useAuth();
 const router = useRouter();
 
-const displayName = ref(user.value?.user_metadata?.display_name || "");
-const displayNameSaving = ref(false);
-const displayNameSuccess = ref(false);
-const displayNameError = ref("");
+const profileSaving = ref(false);
+const profileSuccess = ref(false);
+const profileError = ref("");
+
+const shareableLink = computed(() => {
+    return `${window.location.origin}/collections/${user?.value?.slug}`;
+});
+
+const displayName = ref("");
+const isPublic = ref(false);
 
 const quotaUsedBytes = ref(0);
 const quotaMb = ref(50);
-const quotaLoading = ref(true);
+const quotaUsedMb = ref();
+const quotaPercent = ref(0);
 
-const fetchQuota = async () => {
-    const { data } = await supabase
-        .from("profiles")
-        .select("used_bytes, upload_quota_mb")
-        .eq("id", user.value.id)
-        .single();
-    if (data) {
-        quotaUsedBytes.value = data.used_bytes ?? 0;
-        quotaMb.value = data.upload_quota_mb ?? 50;
-    }
-    quotaLoading.value = false;
+const maskOptions = {
+    mask: "Z",
+    tokens: {
+        Z: { pattern: /[a-zA-Z0-9-]/, multiple: true },
+    },
 };
 
-const quotaUsedMb = computed(() =>
-    (quotaUsedBytes.value / 1024 / 1024).toFixed(1),
-);
-const quotaPercent = computed(() =>
-    Math.min(
-        100,
-        Math.round(
-            (quotaUsedBytes.value / (quotaMb.value * 1024 * 1024)) * 100,
-        ),
-    ),
+watch(
+    user,
+    (newVal) => {
+        if (newVal) {
+            displayName.value = newVal?.display_name;
+            isPublic.value = newVal?.is_public ?? false;
+            quotaUsedBytes.value = newVal.used_bytes ?? 0;
+            quotaMb.value = newVal.upload_quota_mb ?? 50;
+            quotaUsedMb.value = (quotaUsedBytes.value / 1024 / 1024).toFixed(1);
+            quotaPercent.value = Math.min(
+                100,
+                Math.round(
+                    (quotaUsedBytes.value / (quotaMb.value * 1024 * 1024)) *
+                        100,
+                ),
+            );
+        }
+    },
+    { immediate: true },
 );
 
 const deleteConfirmText = ref("");
@@ -54,23 +66,26 @@ const deleteConfirmMatch = computed(
     () => deleteConfirmText.value.trim() === email.value,
 );
 
-const saveDisplayName = async () => {
-    displayNameSaving.value = true;
-    displayNameError.value = "";
-    displayNameSuccess.value = false;
+const saveProfile = async () => {
+    profileSaving.value = true;
+    profileError.value = "";
+    profileSuccess.value = false;
 
-    const { error } = await supabase.auth.updateUser({
-        data: { display_name: displayName.value.trim() },
-    });
+    try {
+        const { error } = await updateProfile({
+            display_name: displayName.value.trim(),
+            is_public: isPublic.value,
+        });
 
-    if (error) {
-        displayNameError.value = error.message;
-    } else {
-        displayNameSuccess.value = true;
-        setTimeout(() => (displayNameSuccess.value = false), 3000);
+        if (error) {
+            profileError.value = error;
+        } else {
+            profileSuccess.value = true;
+            setTimeout(() => (profileSuccess.value = false), 3000);
+        }
+    } finally {
+        profileSaving.value = false;
     }
-
-    displayNameSaving.value = false;
 };
 
 const deleteAccount = async () => {
@@ -170,10 +185,8 @@ const formatDate = (ts) =>
               day: "numeric",
           })
         : "Never";
-
 onMounted(() => {
     fetchDevices();
-    fetchQuota();
 });
 </script>
 
@@ -190,27 +203,52 @@ onMounted(() => {
                 <input type="text" :value="email" disabled />
             </div>
 
-            <div class="field">
-                <label for="display_name">Display name</label>
-                <input
-                    id="display_name"
-                    v-model="displayName"
-                    type="text"
-                    placeholder="Your name"
-                    @keydown.enter.prevent="saveDisplayName"
-                />
-            </div>
+            <form @submit.prevent="saveProfile">
+                <div class="field">
+                    <label for="display_name">Display name</label>
+                    <input
+                        id="display_name"
+                        v-model="displayName"
+                        v-maska="maskOptions"
+                        type="text"
+                        placeholder="Your name"
+                        maxlength="50"
+                    />
+                </div>
 
-            <p v-if="displayNameError" class="error">{{ displayNameError }}</p>
-            <p v-if="displayNameSuccess" class="success">
-                Display name updated!
-            </p>
+                <div class="field field--checkbox">
+                    <label for="is_public">Make your collection public</label>
+                    <input id="is_public" v-model="isPublic" type="checkbox" />
+                </div>
+                <p v-if="user?.is_public">
+                    Your shareable link:
+                    <a :href="shareableLink" target="_blank">{{
+                        shareableLink
+                    }}</a>
+                    <!-- <button
+                        class="button button--icon-only"
+                        type="button"
+                        @click="copyLink"
+                    >
+                        <RiFileCopyLine :size="16" />
+                    </button> -->
+                </p>
 
-            <button @click="saveDisplayName" :disabled="displayNameSaving">
-                {{ displayNameSaving ? "Saving…" : "Save" }}
-            </button>
+                <p v-if="profileError" class="error">{{ profileError }}</p>
+                <p v-if="profileSuccess" class="success">Profile updated!</p>
 
-            <div class="quota" v-if="!quotaLoading">
+                <button
+                    :disabled="
+                        profileSaving ||
+                        (displayName === user?.display_name &&
+                            isPublic === user?.is_public)
+                    "
+                >
+                    {{ profileSaving ? "Saving…" : "Save" }}
+                </button>
+            </form>
+
+            <div class="quota">
                 <div class="quota__label">
                     <span>Artwork storage</span>
                     <span>{{ quotaUsedMb }} MB / {{ quotaMb }} MB</span>
@@ -290,7 +328,7 @@ onMounted(() => {
                     </button>
                 </div>
             </div>
-            <p v-else class="empty">No devices registered yet.</p>
+            <p v-else class="empty">No devices registe$danger yet.</p>
         </section>
 
         <!-- Danger zone -->
@@ -378,10 +416,10 @@ onMounted(() => {
     }
 
     &--danger {
-        border: 1px solid rgba(red, 0.3);
+        border: 1px solid rgba($danger, 0.3);
 
         h2 {
-            color: red;
+            color: $danger;
         }
 
         p {
@@ -400,10 +438,16 @@ onMounted(() => {
         font-size: 0.875rem;
         font-weight: 500;
     }
+
+    &--checkbox {
+        align-items: center;
+        flex-direction: row;
+        margin-bottom: 0;
+    }
 }
 
 .error {
-    color: red;
+    color: $danger;
     font-size: 0.875rem;
     margin-bottom: 1.2rem;
 }
@@ -455,15 +499,15 @@ dialog {
 .token-reveal {
     margin-top: 1.6rem;
     padding: 1.2rem;
-    background-color: rgba(orange, 0.08);
-    border: 1px solid rgba(orange, 0.3);
+    background-color: rgba($warning, 0.08);
+    border: 1px solid rgba($warning, 0.3);
     border-radius: 6px;
 
     &__warning {
         font-size: 0.875rem;
         font-weight: 600;
         margin-bottom: 0.8rem;
-        color: orange;
+        color: $warning;
     }
 
     &__value {
@@ -519,6 +563,13 @@ dialog {
     }
 }
 
+button {
+    width: 100%;
+    @media (min-width: 768px) {
+        width: fit-content;
+    }
+}
+
 .button--small {
     padding: 0.5rem 1rem;
     font-size: 0.8rem;
@@ -546,16 +597,16 @@ dialog {
 
     &__fill {
         height: 100%;
-        background-color: $secondary-lighter;
+        background-color: $primary;
         border-radius: 99px;
         transition: width 0.3s ease;
 
         &--warning {
-            background-color: orange;
+            background-color: $warning;
         }
 
         &--full {
-            background-color: red;
+            background-color: $danger;
         }
     }
 }

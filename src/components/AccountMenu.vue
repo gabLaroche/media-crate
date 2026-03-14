@@ -13,7 +13,7 @@ const onLogout = async () => {
 };
 
 const displayName = computed(
-    () => user?.value?.user_metadata?.display_name ?? user?.value?.email,
+    () => user?.value?.display_name ?? user?.value?.email,
 );
 </script>
 <template>

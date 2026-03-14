@@ -32,16 +32,10 @@ const deleteItem = () => {
 };
 
 const onDialogClick = (e) => {
-    console.log("e", e);
-    console.log("deleteConfirmRef", deleteConfirmRef.value);
     if (e.currentTarget === deleteConfirmRef.value) {
         deleteConfirmRef.value.close();
     }
 };
-
-onMounted(() => {
-    console.log("mounted", release);
-});
 </script>
 
 <template>

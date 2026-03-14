@@ -102,6 +102,10 @@ button {
             background-color: $primary-dark;
         }
     }
+
+    &--icon-only {
+        padding: 0.5rem;
+    }
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────

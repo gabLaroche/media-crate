@@ -148,6 +148,18 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: "/collection/:slug",
+      name: "public-collection",
+      component: () => import("@/pages/CollectionPublicView.vue"),
+      meta: { title: "Collection | MediaCrate" },
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "not-found",
+      component: () => import("@/pages/NotFoundView.vue"),
+      meta: { title: "Not Found | MediaCrate" },
+    },
   ],
 });
 

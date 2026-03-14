@@ -32,6 +32,16 @@ export function useReleases() {
     releases.value = (data || []).map(flattenCollection);
   };
 
+  const fetchAllForUser = async (userId) => {
+    const { data, error } = await supabase
+      .from("collections")
+      .select("*, release:releases(*, artwork:artworks(*))")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    releases.value = (data || []).map(flattenCollection);
+  };
+
   const fetchOne = async (id) => {
     const { data } = await supabase
       .from("collections")
@@ -128,7 +138,6 @@ export function useReleases() {
           form.artwork_hash,
           user.value.id,
         );
-        // Fetch the artwork id by url to store as FK
         const { data: artworkRow } = await supabase
           .from("artworks")
           .select("id")
@@ -199,6 +208,23 @@ export function useReleases() {
         ascending,
         referencedTable: mapping.foreignTable,
       });
+    releases.value = (data || []).map(flattenCollection);
+  };
+
+  const sortReleasesForUser = async (userId, criteria, ascending = true) => {
+    const mapping = sortColumnMap[criteria] ?? {
+      column: "created_at",
+      foreignTable: undefined,
+    };
+    const { data, error } = await supabase
+      .from("collections")
+      .select("*, release:releases(*, artwork:artworks(*))")
+      .eq("user_id", userId)
+      .order(mapping.column, {
+        ascending,
+        referencedTable: mapping.foreignTable,
+      });
+    if (error) throw error;
     releases.value = (data || []).map(flattenCollection);
   };
 
@@ -276,12 +302,14 @@ export function useReleases() {
   return {
     releases,
     fetchAll,
+    fetchAllForUser,
     fetchOne,
     addRelease,
     updateRelease,
     deleteRelease,
     fetchRandomRelease,
     sortReleases,
+    sortReleasesForUser,
     bulkAddReleases,
     uploadArtwork,
   };

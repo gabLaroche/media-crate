@@ -65,7 +65,7 @@ watch(isPasswordValid, (val) => {
                     ref="passwordInputRef"
                 />
                 <button
-                    class="button button--field-icon"
+                    class="button button--field-icon button--icon-only"
                     type="button"
                     @click="togglePasswordVisibility"
                 >
@@ -83,7 +83,7 @@ watch(isPasswordValid, (val) => {
                     ref="confirmPasswordInputRef"
                 />
                 <button
-                    class="button button--field-icon"
+                    class="button button--field-icon button--icon-only"
                     type="button"
                     @click="toggleConfirmPasswordVisibility"
                 >
