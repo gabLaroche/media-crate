@@ -14,7 +14,7 @@ const profileSuccess = ref(false);
 const profileError = ref("");
 
 const shareableLink = computed(() => {
-    return `${window.location.origin}/collections/${user?.value?.slug}`;
+    return `${window.location.origin}/collection/${user?.value?.slug}`;
 });
 
 const displayName = ref("");
