@@ -131,6 +131,7 @@ const update = (field, value) => {
                 :value="row.notes"
                 @input="update('notes', $event.target.value)"
                 placeholder="(optional)"
+                maxlength="2000"
             />
         </div>
 
