@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useAuth } from "@/composables/useAuth";
 import { useRouter } from "vue-router";
+import { sanitizeError } from "@/lib/sanitizeError";
 
 const { login } = useAuth();
 
@@ -15,7 +16,7 @@ const submit = async () => {
         await login(email.value, password.value);
         router.push({ path: "/" });
     } catch (err) {
-        error.value = err?.message;
+        error.value = sanitizeError(err);
     }
 };
 </script>

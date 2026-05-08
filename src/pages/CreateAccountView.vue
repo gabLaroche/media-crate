@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useAuth } from "@/composables/useAuth";
 import { useRouter } from "vue-router";
 import PasswordInput from "@/components/PasswordInput.vue";
+import { sanitizeError } from "@/lib/sanitizeError";
 
 const { signUp } = useAuth();
 
@@ -18,7 +19,7 @@ const submit = async () => {
         await signUp(email.value, password.value, displayName.value);
         router.push({ path: "/confirm-sign-up" });
     } catch (err) {
-        error.value = err?.message;
+        error.value = sanitizeError(err);
     }
 };
 

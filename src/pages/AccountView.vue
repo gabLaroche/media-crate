@@ -5,6 +5,7 @@ import { RiFileCopyLine } from "@remixicon/vue";
 import { useRouter } from "vue-router";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
+import { sanitizeError } from "@/lib/sanitizeError";
 
 const { user, logout, updateProfile } = useAuth();
 const router = useRouter();
@@ -78,7 +79,7 @@ const saveProfile = async () => {
         });
 
         if (error) {
-            profileError.value = error;
+            profileError.value = sanitizeError(error);
         } else {
             profileSuccess.value = true;
             setTimeout(() => (profileSuccess.value = false), 3000);
@@ -156,7 +157,7 @@ const generateToken = async () => {
     });
 
     if (error) {
-        deviceError.value = error.message;
+        deviceError.value = sanitizeError(error);
     } else {
         newToken.value = token;
         newDeviceName.value = "";
@@ -328,7 +329,7 @@ onMounted(() => {
                     </button>
                 </div>
             </div>
-            <p v-else class="empty">No devices registe$danger yet.</p>
+            <p v-else class="empty">No devices registered yet.</p>
         </section>
 
         <!-- Danger zone -->
