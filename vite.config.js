@@ -11,7 +11,7 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       workbox: {
         runtimeCaching: [
           {
@@ -19,6 +19,10 @@ export default defineConfig({
             handler: "NetworkFirst",
             options: {
               cacheName: "api-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60,
+              },
             },
           },
         ],

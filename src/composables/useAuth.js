@@ -45,7 +45,12 @@ export function useAuth() {
   const login = (email, password) =>
     supabase.auth.signInWithPassword({ email, password });
 
-  const logout = () => supabase.auth.signOut();
+  const logout = async () => {
+    await supabase.auth.signOut();
+    if ("caches" in window) {
+      await caches.delete("api-cache");
+    }
+  };
 
   const resetPassword = (email) => supabase.auth.resetPasswordForEmail(email);
 

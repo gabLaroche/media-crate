@@ -4,7 +4,16 @@
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'wasm-unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      connect-src 'self' https://*.supabase.co;
+      img-src 'self' data: https:;
+      font-src 'self';
+      frame-ancestors 'none';
+    ">
+    <title>MediaCrate</title>
   </head>
   <body>
     <div id="app"></div>
