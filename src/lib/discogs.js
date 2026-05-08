@@ -1,17 +1,23 @@
-const BASE_URL = "https://api.discogs.com";
-const TOKEN = import.meta.env.VITE_DISCOGS_TOKEN;
+import { supabase } from "@/lib/supabase";
 
-const headers = {
-  Authorization: `Discogs token=${TOKEN}`,
-  "User-Agent": "CDCollectionApp/1.0",
-};
+export async function searchRelease({ artist, title, page = 1 }) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-export async function searchRelease({ artist }) {
-  const params = new URLSearchParams({
-    artist,
-    type: "release",
-  });
-  const res = await fetch(`${BASE_URL}/database/search?${params}`, { headers });
+  const params = new URLSearchParams({ type: "master", page, per_page: 50 });
+  if (artist) params.set("artist", artist);
+  if (title) params.set("release_title", title);
+
+  const res = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/discogs-search?${params}`,
+    {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    },
+  );
+
   if (!res.ok) throw new Error("Discogs search failed");
   return res.json();
 }
