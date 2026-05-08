@@ -43,75 +43,48 @@ export function useReleases() {
   };
 
   const fetchOne = async (id) => {
+    const { user } = useAuth();
     const { data } = await supabase
       .from("collections")
       .select("*, release:releases(*, artwork:artworks(*))")
       .eq("id", id)
+      .eq("user_id", user.value.id)
       .single();
     return data ? flattenCollection(data) : null;
   };
 
   // --- Shared artwork upload helper ---
-  const uploadArtwork = async (file, hash, userId) => {
-    // 1. Check if identical image already exists by hash
+  const uploadArtwork = async (file, hash) => {
+    // Client-side hash dedup: skip the network round-trip if we already have this image
     if (hash) {
-      const { data: existingArtwork } = await supabase
+      const { data: existing } = await supabase
         .from("artworks")
         .select("id, url")
         .eq("hash", hash)
         .maybeSingle();
-
-      if (existingArtwork) return existingArtwork.url;
+      if (existing) return { url: existing.url, id: existing.id };
     }
-
-    // 2. Check quota before uploading
-    const { data: profile, error: profileErr } = await supabase
-      .from("profiles")
-      .select("used_bytes, upload_quota_mb")
-      .eq("id", userId)
-      .single();
-
-    if (profileErr) throw profileErr;
-
-    const quotaBytes = (profile.upload_quota_mb ?? 50) * 1024 * 1024;
-    if (profile.used_bytes + file.size > quotaBytes) {
-      const usedMb = (profile.used_bytes / 1024 / 1024).toFixed(1);
-      const quotaMb = profile.upload_quota_mb ?? 50;
-      throw new Error(
-        `Storage quota exceeded (${usedMb} MB used of ${quotaMb} MB).`,
-      );
-    }
-
-    // 3. Upload to Storage
-    const ext = file.name.split(".").pop();
-    const filePath = `${userId}/${crypto.randomUUID()}.${ext}`;
-
-    const { error: uploadErr } = await supabase.storage
-      .from("artworks")
-      .upload(filePath, file, { contentType: file.type });
-
-    if (uploadErr) throw uploadErr;
 
     const {
-      data: { publicUrl },
-    } = supabase.storage.from("artworks").getPublicUrl(filePath);
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    // 4. Insert into artworks table
-    const { data: artworkRow, error: artworkErr } = await supabase
-      .from("artworks")
-      .insert({
-        file_path: filePath,
-        url: publicUrl,
-        size_bytes: file.size,
-        hash: hash ?? null,
-        owner_user_id: userId,
-      })
-      .select("id, url")
-      .single();
+    const form = new FormData();
+    form.append("file", file);
+    if (hash) form.append("hash", hash);
 
-    if (artworkErr) throw artworkErr;
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-artwork`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: form,
+      },
+    );
 
-    return artworkRow.url;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Upload failed.");
+    return { url: data.url, id: data.id };
   };
 
   const addRelease = async (form) => {
@@ -133,17 +106,8 @@ export function useReleases() {
       let artworkId = null;
 
       if (form.artwork_file) {
-        const url = await uploadArtwork(
-          form.artwork_file,
-          form.artwork_hash,
-          user.value.id,
-        );
-        const { data: artworkRow } = await supabase
-          .from("artworks")
-          .select("id")
-          .eq("url", url)
-          .maybeSingle();
-        if (artworkRow) artworkId = artworkRow.id;
+        const { id } = await uploadArtwork(form.artwork_file, form.artwork_hash);
+        artworkId = id;
       } else if (form.artwork_url) {
         const { data: artworkRow, error: artworkErr } = await supabase
           .from("artworks")
@@ -228,11 +192,23 @@ export function useReleases() {
     releases.value = (data || []).map(flattenCollection);
   };
 
-  const updateRelease = (id, updates) =>
-    supabase.from("collections").update(updates).eq("id", id);
+  const updateRelease = async (id, updates) => {
+    const { user } = useAuth();
+    return supabase
+      .from("collections")
+      .update(updates)
+      .eq("id", id)
+      .eq("user_id", user.value.id);
+  };
 
-  const deleteRelease = (id) =>
-    supabase.from("collections").delete().eq("id", id);
+  const deleteRelease = async (id) => {
+    const { user } = useAuth();
+    return supabase
+      .from("collections")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.value.id);
+  };
 
   const bulkAddReleases = async (payload) => {
     const {
