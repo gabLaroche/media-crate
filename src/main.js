@@ -7,7 +7,9 @@ import "@/assets/styles/_base.scss";
 
 const app = createApp(App);
 app.use(router);
-app.mount("#app");
 
+const { init } = useAuth();
+await init();
+
+app.mount("#app");
 registerSW({ immediate: true });
-useAuth().init();

@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/composables/useAuth";
 
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import MainLayout from "@/layouts/MainLayout.vue";
@@ -163,11 +163,11 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach(async (to) => {
-  document.title = to.meta.title || "MediaCrate";
+router.beforeEach((to) => {
+  document.title = to.meta.title || "My music collection";
 
-  const { data } = await supabase.auth.getSession();
-  const loggedIn = !!data.session;
+  const { user } = useAuth();
+  const loggedIn = !!user.value;
 
   if (to.meta.requiresAuth && !loggedIn) return "/login";
   if (loggedIn && to.path === "/login") return "/";
