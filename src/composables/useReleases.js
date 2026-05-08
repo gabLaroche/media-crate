@@ -25,9 +25,11 @@ export function useReleases() {
   });
 
   const fetchAll = async () => {
+    const { user } = useAuth();
     const { data } = await supabase
       .from("collections")
       .select("*, release:releases(*, artwork:artworks(*))")
+      .eq("user_id", user.value.id)
       .order("created_at", { ascending: true });
     releases.value = (data || []).map(flattenCollection);
   };
@@ -161,6 +163,7 @@ export function useReleases() {
   };
 
   const sortReleases = async (criteria, ascending = true) => {
+    const { user } = useAuth();
     const mapping = sortColumnMap[criteria] ?? {
       column: "created_at",
       foreignTable: undefined,
@@ -168,6 +171,7 @@ export function useReleases() {
     const { data } = await supabase
       .from("collections")
       .select("*, release:releases(*, artwork:artworks(*))")
+      .eq("user_id", user.value.id)
       .order(mapping.column, {
         ascending,
         referencedTable: mapping.foreignTable,
