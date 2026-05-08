@@ -163,6 +163,12 @@ const router = createRouter({
   ],
 });
 
+router.onError((error, to) => {
+  if (error.message.includes("dynamically imported module")) {
+    window.location.href = to.fullPath;
+  }
+});
+
 router.beforeEach((to) => {
   document.title = to.meta.title || "My music collection";
 
