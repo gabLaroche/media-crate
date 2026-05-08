@@ -11,7 +11,7 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     VitePWA({
-      registerType: "prompt",
+      registerType: "autoUpdate",
       workbox: {
         runtimeCaching: [
           {
