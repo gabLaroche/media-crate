@@ -37,8 +37,7 @@ const filteredSources = computed(() => {
 const selectExisting = (s) => {
     selectedExisting.value = s;
     search.value = s.name;
-    emit("update:modelValue", s.id); // binds to source_id in form
-    emit("update:typed", ""); // clear typed new source
+    emit("update:modelValue", s.id);
     isOpen.value = false;
 };
 
