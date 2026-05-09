@@ -34,6 +34,7 @@ const pick = async () => {
                 v-if="current"
                 :release="current"
                 :show-buttons="false"
+                view-mode="list"
             />
         </div>
     </div>
