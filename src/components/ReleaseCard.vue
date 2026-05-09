@@ -80,10 +80,7 @@ const onDialogClick = (e) => {
                         <strong class="clamp">{{ release.album_name }}</strong>
                         <span class="info-label">Artist</span>
                         <strong class="clamp">{{ release.artist }}</strong>
-                        <div
-                            v-if="release.release_date"
-                            class="detail-row"
-                        >
+                        <div v-if="release.release_date" class="detail-row">
                             <RiCalendarLine :width="13" />
                             <span>{{ release.release_date }}</span>
                         </div>
@@ -196,7 +193,8 @@ const onDialogClick = (e) => {
                 <p>
                     Are you sure you want to delete
                     <strong>{{ release.album_name }}</strong> by
-                    <strong>{{ release.artist }}</strong>?
+                    <strong>{{ release.artist }}</strong
+                    >?
                 </p>
                 <div class="dialog-buttons">
                     <button class="button--delete" @click="deleteItem">
@@ -363,7 +361,6 @@ const onDialogClick = (e) => {
     align-items: flex-end;
     font-size: 0.8rem;
     color: $neutral-mid;
-    padding-right: 2.5rem;
 
     .detail-row {
         justify-content: flex-end;
@@ -376,6 +373,22 @@ const onDialogClick = (e) => {
     right: 0.75rem;
     display: flex;
     gap: 0.3rem;
+}
+
+@media screen and (max-width: 430px) {
+    .list-body {
+        gap: 0.75rem;
+    }
+
+    .list-left {
+        flex: 1;
+        max-width: none;
+        padding-right: 4.5rem;
+    }
+
+    .list-right {
+        display: none;
+    }
 }
 
 // ── Grid mode ────────────────────────────────────────────

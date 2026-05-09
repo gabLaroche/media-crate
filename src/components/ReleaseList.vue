@@ -136,75 +136,78 @@ onMounted(init);
                                     type="search"
                                     v-model="searchText"
                                 />
-                                <RiSearchLine
-                                    class="search-icon"
-                                    :width="16"
-                                />
+                                <RiSearchLine class="search-icon" :width="16" />
                             </div>
                         </div>
 
                         <div class="controls-row">
-                            <div class="control-group">
-                                <span class="control-label">View as</span>
-                                <div class="view-buttons">
-                                    <button
-                                        :class="[
-                                            'btn-view',
-                                            {
-                                                active: viewMode === 'grid',
-                                            },
-                                        ]"
-                                        @click="viewMode = 'grid'"
-                                        aria-label="Grid view"
+                            <div class="control-group-wrapper">
+                                <div class="control-group">
+                                    <span class="control-label">View as</span>
+                                    <div class="view-buttons">
+                                        <button
+                                            :class="[
+                                                'btn-view',
+                                                {
+                                                    active: viewMode === 'grid',
+                                                },
+                                            ]"
+                                            @click="viewMode = 'grid'"
+                                            aria-label="Grid view"
+                                        >
+                                            <RiLayoutGridLine :width="15" />
+                                        </button>
+                                        <button
+                                            :class="[
+                                                'btn-view',
+                                                {
+                                                    active: viewMode === 'list',
+                                                },
+                                            ]"
+                                            @click="viewMode = 'list'"
+                                            aria-label="List view"
+                                        >
+                                            <RiListUnordered :width="15" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <span class="control-label"
+                                        >Filter by:</span
                                     >
-                                        <RiLayoutGridLine :width="15" />
-                                    </button>
-                                    <button
-                                        :class="[
-                                            'btn-view',
-                                            {
-                                                active: viewMode === 'list',
-                                            },
-                                        ]"
-                                        @click="viewMode = 'list'"
-                                        aria-label="List view"
-                                    >
-                                        <RiListUnordered :width="15" />
-                                    </button>
+                                    <div class="filter-pills">
+                                        <button
+                                            :class="[
+                                                'pill',
+                                                { active: !mediaTypeFilter },
+                                            ]"
+                                            @click="mediaTypeFilter = ''"
+                                        >
+                                            All
+                                        </button>
+                                        <button
+                                            v-for="type in MEDIA_TYPES"
+                                            :key="type.value"
+                                            :class="[
+                                                'pill',
+                                                {
+                                                    active:
+                                                        mediaTypeFilter ===
+                                                        type.value,
+                                                },
+                                            ]"
+                                            @click="
+                                                mediaTypeFilter = type.value
+                                            "
+                                        >
+                                            {{ type.label }}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="control-group">
-                                <span class="control-label">Filter by:</span>
-                                <div class="filter-pills">
-                                    <button
-                                        :class="[
-                                            'pill',
-                                            { active: !mediaTypeFilter },
-                                        ]"
-                                        @click="mediaTypeFilter = ''"
-                                    >
-                                        All
-                                    </button>
-                                    <button
-                                        v-for="type in MEDIA_TYPES"
-                                        :key="type.value"
-                                        :class="[
-                                            'pill',
-                                            {
-                                                active:
-                                                    mediaTypeFilter ===
-                                                    type.value,
-                                            },
-                                        ]"
-                                        @click="mediaTypeFilter = type.value"
-                                    >
-                                        {{ type.label }}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="control-group sort-group">
                                 <span class="control-label">Sort By</span>
                                 <select v-model="sortState">
                                     <option value="album_name">
@@ -238,11 +241,7 @@ onMounted(init);
                     <div class="header-right">
                         <div class="stat-pill stat-pill--total">
                             {{ releases.length }}
-                            {{
-                                releases.length === 1
-                                    ? "Release"
-                                    : "Releases"
-                            }}
+                            {{ releases.length === 1 ? "Release" : "Releases" }}
                             total
                         </div>
                         <div class="stat-pills">
@@ -347,6 +346,14 @@ onMounted(init);
     display: flex;
     align-items: center;
     gap: 1.25rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.control-group-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
@@ -354,10 +361,6 @@ onMounted(init);
     display: flex;
     align-items: center;
     gap: 0.5rem;
-}
-
-.sort-group {
-    margin-left: auto;
 }
 
 .view-buttons {
