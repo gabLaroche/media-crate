@@ -3,31 +3,47 @@ import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { supabase } from "@/lib/supabase";
 import { useReleases } from "@/composables/useReleases";
-import { RiArrowUpLine, RiArrowDownLine } from "@remixicon/vue";
+import { useSources } from "@/composables/useSources";
+import {
+    RiArrowUpLine,
+    RiArrowDownLine,
+    RiSearchLine,
+    RiLayoutGridLine,
+    RiListUnordered,
+} from "@remixicon/vue";
 import ReleaseCard from "./ReleaseCard.vue";
 import LoadingSpinner from "./LoadingSpinner.vue";
 
-const route = useRoute();
+const MEDIA_TYPES = [
+    { value: "cd", label: "CD", plural: "CDs" },
+    { value: "vinyl", label: "Vinyl", plural: "Vinyls" },
+    { value: "cassette", label: "Cassette", plural: "Cassettes" },
+];
 
+const route = useRoute();
 const emit = defineEmits(["resolved", "error"]);
 
 const { releases, fetchAll, fetchAllForUser } = useReleases();
+const { sources, fetchSources } = useSources();
 
 const ascending = ref(true);
 const sortState = ref("acquired_date");
 const isFetching = ref(false);
 const searchText = ref("");
 const mediaTypeFilter = ref("");
+const viewMode = ref("grid");
 
 const publicUserId = ref(null);
 const displayName = ref("");
 
-const mediaTypes = computed(() => {
-    const types = new Set(
-        releases.value.map((r) => r.media_type).filter(Boolean),
-    );
-    return [...types].sort();
-});
+const typeCounts = computed(() =>
+    Object.fromEntries(
+        MEDIA_TYPES.map((t) => [
+            t.value,
+            releases.value.filter((r) => r.media_type === t.value).length,
+        ]),
+    ),
+);
 
 const filteredReleases = computed(() => {
     let result = [...releases.value];
@@ -88,17 +104,14 @@ const init = async () => {
 
         const { data: nameData } = await supabase.rpc(
             "get_display_name_by_id",
-            {
-                p_user_id: profile.id,
-            },
+            { p_user_id: profile.id },
         );
         displayName.value = nameData ?? slug;
 
         emit("resolved", displayName.value);
-
         await fetchAllForUser(profile.id);
     } else {
-        await fetchAll();
+        await Promise.all([fetchAll(), fetchSources()]);
     }
 
     isFetching.value = false;
@@ -113,68 +126,148 @@ onMounted(init);
 
         <template v-else>
             <template v-if="releases.length > 0">
-                <p class="count">
-                    <template v-if="publicUserId">
-                        <strong>{{ displayName }}</strong> has
-                    </template>
-                    <template v-else>You have&nbsp;</template>
-                    <strong>{{ releases.length }}</strong>
-                    {{ releases.length === 1 ? "release" : "releases" }} in
-                    {{ publicUserId ? "their" : "your" }} collection<template
-                        v-if="filteredReleases.length !== releases.length"
-                        >, showing {{ filteredReleases.length }}</template
-                    >
-                </p>
+                <div class="collection-header">
+                    <div class="header-left">
+                        <div class="search-field">
+                            <span class="control-label">Search</span>
+                            <div class="search-wrapper">
+                                <input
+                                    class="search-input"
+                                    type="search"
+                                    v-model="searchText"
+                                />
+                                <RiSearchLine
+                                    class="search-icon"
+                                    :width="16"
+                                />
+                            </div>
+                        </div>
 
-                <div class="controls">
-                    <input
-                        class="search-input"
-                        type="search"
-                        v-model="searchText"
-                        placeholder="Search artist or album…"
-                    />
+                        <div class="controls-row">
+                            <div class="control-group">
+                                <span class="control-label">View as</span>
+                                <div class="view-buttons">
+                                    <button
+                                        :class="[
+                                            'btn-view',
+                                            {
+                                                active: viewMode === 'grid',
+                                            },
+                                        ]"
+                                        @click="viewMode = 'grid'"
+                                        aria-label="Grid view"
+                                    >
+                                        <RiLayoutGridLine :width="15" />
+                                    </button>
+                                    <button
+                                        :class="[
+                                            'btn-view',
+                                            {
+                                                active: viewMode === 'list',
+                                            },
+                                        ]"
+                                        @click="viewMode = 'list'"
+                                        aria-label="List view"
+                                    >
+                                        <RiListUnordered :width="15" />
+                                    </button>
+                                </div>
+                            </div>
 
-                    <select
-                        v-if="mediaTypes.length > 1"
-                        v-model="mediaTypeFilter"
-                        class="filter-select"
-                    >
-                        <option value="">All formats</option>
-                        <option
-                            v-for="type in mediaTypes"
-                            :key="type"
-                            :value="type"
-                        >
-                            {{ type }}
-                        </option>
-                    </select>
+                            <div class="control-group">
+                                <span class="control-label">Filter by:</span>
+                                <div class="filter-pills">
+                                    <button
+                                        :class="[
+                                            'pill',
+                                            { active: !mediaTypeFilter },
+                                        ]"
+                                        @click="mediaTypeFilter = ''"
+                                    >
+                                        All
+                                    </button>
+                                    <button
+                                        v-for="type in MEDIA_TYPES"
+                                        :key="type.value"
+                                        :class="[
+                                            'pill',
+                                            {
+                                                active:
+                                                    mediaTypeFilter ===
+                                                    type.value,
+                                            },
+                                        ]"
+                                        @click="mediaTypeFilter = type.value"
+                                    >
+                                        {{ type.label }}
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div class="sort-controls">
-                        <label for="sort-select">Sort:</label>
-                        <select id="sort-select" v-model="sortState">
-                            <option value="album_name">Release name</option>
-                            <option value="artist">Artist</option>
-                            <option value="release_date">Release year</option>
-                            <option value="acquired_date">Acquired date</option>
-                            <option value="created_at">Date added</option>
-                        </select>
-                        <button
-                            class="sort-order-btn"
-                            @click="ascending = !ascending"
-                        >
-                            <span>{{ ascending ? "Asc" : "Desc" }}</span>
-                            <RiArrowUpLine v-if="ascending" :width="16" />
-                            <RiArrowDownLine v-else :width="16" />
-                        </button>
+                            <div class="control-group sort-group">
+                                <span class="control-label">Sort By</span>
+                                <select v-model="sortState">
+                                    <option value="album_name">
+                                        Album name
+                                    </option>
+                                    <option value="artist">Artist</option>
+                                    <option value="release_date">
+                                        Release year
+                                    </option>
+                                    <option value="acquired_date">
+                                        Acquired date
+                                    </option>
+                                    <option value="created_at">
+                                        Date added
+                                    </option>
+                                </select>
+                                <button
+                                    class="btn-sort-dir"
+                                    @click="ascending = !ascending"
+                                >
+                                    <RiArrowUpLine
+                                        v-if="ascending"
+                                        :width="16"
+                                    />
+                                    <RiArrowDownLine v-else :width="16" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="header-right">
+                        <div class="stat-pill stat-pill--total">
+                            {{ releases.length }}
+                            {{
+                                releases.length === 1
+                                    ? "Release"
+                                    : "Releases"
+                            }}
+                            total
+                        </div>
+                        <div class="stat-pills">
+                            <div
+                                v-for="type in MEDIA_TYPES"
+                                :key="type.value"
+                                class="stat-pill"
+                            >
+                                {{ typeCounts[type.value] }}
+                                {{ type.plural }}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div v-if="filteredReleases.length > 0" class="release-list">
+                <div
+                    v-if="filteredReleases.length > 0"
+                    :class="['release-list', `release-list--${viewMode}`]"
+                >
                     <ReleaseCard
                         v-for="release in filteredReleases"
                         :key="release.id"
                         :release="release"
                         :show-buttons="!publicUserId"
+                        :view-mode="viewMode"
                         @deleted="handleDelete"
                     />
                 </div>
@@ -198,51 +291,181 @@ onMounted(init);
 .release-list-page {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
-.count {
-    margin: 0;
-}
+.collection-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    align-items: start;
 
-.controls {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-.search-input {
-    flex: 1;
-    min-width: 180px;
-}
-
-.filter-select {
-    min-width: 130px;
-}
-
-.sort-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-left: auto;
-
-    label {
-        white-space: nowrap;
+    @media screen and (max-width: 860px) {
+        grid-template-columns: 1fr;
     }
 }
 
-.sort-order-btn {
+.header-left {
     display: flex;
-    align-items: center;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.control-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $neutral-mid;
     white-space: nowrap;
 }
 
-.release-list {
+.search-field {
     display: flex;
     flex-direction: column;
+    gap: 0.3rem;
+}
+
+.search-wrapper {
+    position: relative;
+
+    .search-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding-right: 2.2rem;
+    }
+
+    .search-icon {
+        position: absolute;
+        right: 0.65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $neutral-mid;
+        pointer-events: none;
+    }
+}
+
+.controls-row {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sort-group {
+    margin-left: auto;
+}
+
+.view-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.btn-view {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background-color: $primary-muted;
+    color: $primary-dark;
+
+    &.active,
+    &:hover {
+        background-color: $primary;
+        color: $neutral-white;
+    }
+}
+
+.filter-pills {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.pill {
+    padding: 0.25rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background-color: $primary-muted;
+    color: $primary-dark;
+    cursor: pointer;
+    border: none;
+
+    &.active,
+    &:hover {
+        background-color: $primary;
+        color: $neutral-white;
+    }
+}
+
+.btn-sort-dir {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.header-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+
+    @media screen and (max-width: 860px) {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+    }
+}
+
+.stat-pill {
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    background-color: $primary-muted;
+    color: $primary-darker;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.stat-pill--total {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.stat-pills {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+
+    @media screen and (max-width: 860px) {
+        justify-content: flex-start;
+    }
+}
+
+.release-list--grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 1rem;
+}
+
+.release-list--list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .no-results {
