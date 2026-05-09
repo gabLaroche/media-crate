@@ -6,10 +6,11 @@ import { useAuth } from "@/composables/useAuth";
 import "@/assets/styles/_base.scss";
 
 const app = createApp(App);
-app.use(router);
 
 const { init } = useAuth();
 await init();
+
+app.use(router);
 
 app.mount("#app");
 registerSW({ immediate: true });
