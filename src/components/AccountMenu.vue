@@ -74,12 +74,6 @@ const displayName = computed(
     right: 25px;
     width: 200px;
 
-    &__display-name,
-    &__logout,
-    a {
-        font-size: 1.6rem;
-    }
-
     &__container {
         display: flex;
         flex-direction: column;
