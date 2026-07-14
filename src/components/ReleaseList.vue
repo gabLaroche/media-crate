@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { supabase } from "@/lib/supabase";
 import { useReleases } from "@/composables/useReleases";
@@ -31,7 +31,12 @@ const sortState = ref("acquired_date");
 const isFetching = ref(false);
 const searchText = ref("");
 const mediaTypeFilter = ref("");
-const viewMode = ref("grid");
+const VIEW_MODE_KEY = "releaseListViewMode";
+const viewMode = ref(localStorage.getItem(VIEW_MODE_KEY) || "grid");
+
+watch(viewMode, (value) => {
+    localStorage.setItem(VIEW_MODE_KEY, value);
+});
 
 const publicUserId = ref(null);
 const displayName = ref("");
