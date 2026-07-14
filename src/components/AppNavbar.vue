@@ -1,5 +1,5 @@
 <script setup>
-import { RiSunLine, RiMoonLine } from "@remixicon/vue";
+import { RiSunLine, RiMoonLine, RiMenuLine } from "@remixicon/vue";
 import AccountMenu from "@/components/AccountMenu.vue";
 import { useTheme } from "@/composables/useTheme";
 
@@ -8,10 +8,51 @@ const { theme, toggleTheme } = useTheme();
 
 <template>
     <nav class="navbar">
-        <router-link to="/">Collection</router-link>
-        <router-link to="/add">Add</router-link>
-        <router-link to="/bulk-add">Bulk Add</router-link>
-        <router-link to="/random">Random</router-link>
+        <button
+            type="button"
+            class="nav-toggle"
+            popovertarget="mobile-nav-popover"
+            aria-label="Open menu"
+        >
+            <RiMenuLine />
+        </button>
+
+        <div class="nav-links">
+            <router-link to="/">Collection</router-link>
+            <router-link to="/add">Add</router-link>
+            <router-link to="/bulk-add">Bulk Add</router-link>
+            <router-link to="/random">Random</router-link>
+        </div>
+
+        <div class="mobile-nav" id="mobile-nav-popover" popover>
+            <div class="mobile-nav__container">
+                <router-link
+                    to="/"
+                    popovertarget="mobile-nav-popover"
+                    popovertargetaction="hide"
+                    >Collection</router-link
+                >
+                <router-link
+                    to="/add"
+                    popovertarget="mobile-nav-popover"
+                    popovertargetaction="hide"
+                    >Add</router-link
+                >
+                <router-link
+                    to="/bulk-add"
+                    popovertarget="mobile-nav-popover"
+                    popovertargetaction="hide"
+                    >Bulk Add</router-link
+                >
+                <router-link
+                    to="/random"
+                    popovertarget="mobile-nav-popover"
+                    popovertargetaction="hide"
+                    >Random</router-link
+                >
+            </div>
+        </div>
+
         <div class="nav-end">
             <button
                 type="button"
@@ -41,6 +82,54 @@ const { theme, toggleTheme } = useTheme();
 
     a {
         font-weight: bold;
+    }
+}
+
+.nav-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    cursor: pointer;
+
+    svg {
+        width: 2.4rem;
+        height: 2.4rem;
+    }
+
+    @media (min-width: 768px) {
+        display: none;
+    }
+}
+
+.nav-links {
+    display: none;
+
+    @media (min-width: 768px) {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+}
+
+.mobile-nav {
+    background-color: $surface;
+    color: $text;
+    border: 1px solid $border;
+    padding: 1.6rem;
+    position: absolute;
+    inset: unset;
+    top: 70px;
+    left: 25px;
+    width: 200px;
+
+    &__container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
     }
 }
 
