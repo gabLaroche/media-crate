@@ -44,6 +44,7 @@ const normalizeLocalRelease = (r) => ({
     cover_image: sanitizeCoverImage(r.artworks?.url ?? null),
     country: null,
     discogs_master_id: null,
+    discogs_type: null,
 });
 
 const availableCountries = computed(() => {
@@ -129,6 +130,7 @@ const search = async () => {
             ? (discogsData.value.results || []).map((r) => ({
                   ...r,
                   cover_image: sanitizeCoverImage(r.cover_image),
+                  discogs_type: "master",
               }))
             : [];
 
@@ -255,6 +257,7 @@ const lookupById = async () => {
         const normalized = {
             ...result,
             cover_image: sanitizeCoverImage(result.cover_image),
+            discogs_type: result.type,
         };
 
         results.value = [

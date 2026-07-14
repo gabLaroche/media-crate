@@ -20,6 +20,7 @@ export function useReleases() {
     artist: item.release?.artist,
     release_date: item.release?.year,
     discogs_master_id: item.release?.discogs_master_id,
+    discogs_type: item.release?.discogs_type,
     artwork_url: item.release?.artwork?.url ?? null,
     artwork_file_path: item.release?.artwork?.file_path ?? null,
   });
@@ -136,6 +137,7 @@ export function useReleases() {
           artist: form.artist,
           year: form.release_date ? parseInt(form.release_date) : null,
           discogs_master_id: form.discogs_master_id || null,
+          discogs_type: form.discogs_type || null,
           artwork_id: artworkId,
         })
         .select("id")
@@ -289,6 +291,7 @@ export function useReleases() {
       artist: item.releases?.artist,
       release_date: item.releases?.year,
       discogs_master_id: item.releases?.discogs_master_id,
+      discogs_type: item.releases?.discogs_type,
       artwork_url: item.releases?.artworks?.url ?? null,
       artwork_file_path: item.releases?.artworks?.file_path ?? null,
     };

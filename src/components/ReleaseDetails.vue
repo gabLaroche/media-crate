@@ -29,11 +29,11 @@ const acquiredDate = computed(() => {
     });
 });
 
-const discogsUrl = computed(() =>
-    release.discogs_master_id
-        ? `https://www.discogs.com/master/${release.discogs_master_id}`
-        : null,
-);
+const discogsUrl = computed(() => {
+    if (!release.discogs_master_id) return null;
+    const path = release.discogs_type === "release" ? "release" : "master";
+    return `https://www.discogs.com/${path}/${release.discogs_master_id}`;
+});
 
 const goToEditPage = () => router.push(`/edit/${release.id}`);
 </script>

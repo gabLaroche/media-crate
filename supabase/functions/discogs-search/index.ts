@@ -33,6 +33,7 @@ function formatArtists(artists: { name: string; join?: string }[] | undefined) {
 function normalizeMaster(master: any) {
   return {
     id: master.id,
+    type: "master",
     title: `${formatArtists(master.artists)} - ${master.title}`,
     year: master.year || null,
     cover_image: master.images?.[0]?.uri ?? null,
@@ -43,6 +44,7 @@ function normalizeMaster(master: any) {
 function normalizeRelease(release: any) {
   return {
     id: release.master_id || release.id,
+    type: release.master_id ? "master" : "release",
     title: `${formatArtists(release.artists)} - ${release.title}`,
     year: release.year || null,
     cover_image: release.images?.[0]?.uri ?? null,

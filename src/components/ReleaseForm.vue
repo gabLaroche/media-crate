@@ -45,6 +45,7 @@ const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
 const newRow = () => ({
     id: crypto.randomUUID(),
     discogs_id: null,
+    discogs_type: null,
     artist: "",
     album_name: "",
     release_date: "",
@@ -115,6 +116,7 @@ const autofill = (result) => {
         release_date: result.year ? String(result.year) : "",
         artwork_url: result.cover_image || "",
         discogs_id: result._source === "local" ? null : result.id,
+        discogs_type: result._source === "local" ? null : result.discogs_type,
         artwork_file: null,
         artwork_hash: null,
     };
@@ -134,6 +136,7 @@ const onDiscogsSelected = (result) => {
     bulkRows.value.push({
         ...newRow(),
         discogs_id: result._source === "local" ? null : result.id,
+        discogs_type: result._source === "local" ? null : result.discogs_type,
         artist,
         album_name: albumName,
         release_date: result.year ? String(result.year) : "",
@@ -193,6 +196,7 @@ const resolveRow = async (r) => {
         year: r.release_date ? parseInt(r.release_date) : undefined,
         acquired_date: r.acquired_date || undefined,
         discogs_master_id: r.discogs_id ?? undefined,
+        discogs_type: r.discogs_type ?? undefined,
         artwork_url: artworkUrl,
         notes: r.notes || undefined,
         condition: r.condition,

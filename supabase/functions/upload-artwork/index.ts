@@ -44,14 +44,18 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
-  // Verify user via their JWT
-  const userClient = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } },
-  );
-  const { data: { user }, error: authError } = await userClient.auth.getUser();
-  if (authError || !user) return json({ error: "Unauthorized" }, 401);
+  // Verify user via their JWT directly against GoTrue - supabase-js's
+  // auth.getUser() with no argument reads a persisted session from client
+  // storage, which doesn't exist in a stateless edge function, and always
+  // fails with "Auth session missing!" regardless of the bearer token.
+  const authRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/user`, {
+    headers: {
+      Authorization: authHeader,
+      apikey: Deno.env.get("SUPABASE_ANON_KEY")!,
+    },
+  });
+  if (!authRes.ok) return json({ error: "Unauthorized" }, 401);
+  const user = await authRes.json();
 
   // Admin client bypasses RLS for storage and DB writes
   const admin = createClient(
