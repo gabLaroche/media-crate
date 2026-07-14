@@ -4,9 +4,11 @@ import App from "./App.vue";
 import router from "./router";
 import { useAuth } from "@/composables/useAuth";
 import { useTheme } from "@/composables/useTheme";
+import { useModalScrollLock } from "@/composables/useModalScrollLock";
 import "@/assets/styles/_base.scss";
 
 useTheme().init();
+useModalScrollLock().init();
 
 const app = createApp(App);
 
