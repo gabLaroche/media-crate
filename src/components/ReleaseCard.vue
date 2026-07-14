@@ -3,9 +3,11 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import {
     RiCloseLine,
+    RiEyeLine,
     RiPencilLine,
     RiDeleteBin6Line,
     RiCalendarLine,
+    RiImportLine,
     RiStore2Line,
     RiInformationLine,
 } from "@remixicon/vue";
@@ -22,6 +24,7 @@ const { sources } = useSources();
 
 const emit = defineEmits(["deleted"]);
 const deleteConfirmRef = ref(null);
+const viewDialogRef = ref(null);
 const router = useRouter();
 
 const sourceName = computed(
@@ -39,6 +42,8 @@ const acquiredDate = computed(() => {
 
 const goToEditPage = () => router.push(`/edit/${release.id}`);
 
+const openViewDialog = () => viewDialogRef.value?.showModal();
+
 const deleteItem = () => {
     deleteRelease(release.id).then(() => {
         emit("deleted", release.id);
@@ -51,10 +56,19 @@ const onDialogClick = (e) => {
         deleteConfirmRef.value.close();
     }
 };
+
+const onViewDialogClick = (e) => {
+    if (e.currentTarget === viewDialogRef.value) {
+        viewDialogRef.value.close();
+    }
+};
 </script>
 
 <template>
-    <div :class="['card', `card--${viewMode}`]">
+    <div
+        :class="['card', `card--${viewMode}`]"
+        @click="viewMode === 'list' && openViewDialog()"
+    >
         <div class="card-image-wrap">
             <img
                 class="card-image"
@@ -66,51 +80,40 @@ const onDialogClick = (e) => {
         <!-- ── LIST MODE BODY ── -->
         <template v-if="viewMode === 'list'">
             <div class="list-body">
-                <div class="list-left">
-                    <div class="tags">
-                        <span v-if="release.media_type" class="tag">{{
-                            release.media_type
-                        }}</span>
-                        <span v-if="release.condition" class="tag">{{
-                            release.condition
-                        }}</span>
-                    </div>
-                    <div class="list-info">
-                        <strong class="clamp">{{ release.album_name }}</strong>
-                        <span class="info-label">By</span>
-                        <strong class="clamp">{{ release.artist }}</strong>
-                        <div v-if="release.release_date" class="detail-row">
-                            <RiCalendarLine :width="13" />
-                            <span>{{ release.release_date }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="list-right">
-                    <span v-if="acquiredDate" class="clamp"
-                        >Acquired: {{ acquiredDate }}</span
+                <div class="list-info">
+                    <strong class="clamp">{{ release.album_name }}</strong>
+                    <span class="clamp list-artist">{{
+                        release.artist
+                    }}</span>
+                    <div
+                        v-if="release.release_date"
+                        class="detail-row list-release-date"
                     >
-                    <div v-if="sourceName" class="detail-row">
-                        <RiStore2Line :width="13" />
-                        <span class="clamp">{{ sourceName }}</span>
-                    </div>
-                    <div v-if="release.notes" class="detail-row">
-                        <RiInformationLine :width="13" />
-                        <span class="clamp">{{ release.notes }}</span>
+                        <RiCalendarLine :width="12" />
+                        <span class="clamp">{{ release.release_date }}</span>
                     </div>
                 </div>
 
-                <div v-if="showButtons" class="list-actions">
-                    <button class="btn-icon" @click="goToEditPage">
-                        <RiPencilLine :width="14" />
-                    </button>
+                <div class="list-actions" @click.stop>
                     <button
-                        class="btn-icon btn-icon--danger"
+                        class="btn-icon"
                         command="show-modal"
-                        :commandfor="`delete-confirm-${release.id}`"
+                        :commandfor="`view-details-${release.id}`"
                     >
-                        <RiDeleteBin6Line :width="14" />
+                        <RiEyeLine :width="14" />
                     </button>
+                    <template v-if="showButtons">
+                        <button class="btn-icon" @click="goToEditPage">
+                            <RiPencilLine :width="14" />
+                        </button>
+                        <button
+                            class="btn-icon btn-icon--danger"
+                            command="show-modal"
+                            :commandfor="`delete-confirm-${release.id}`"
+                        >
+                            <RiDeleteBin6Line :width="14" />
+                        </button>
+                    </template>
                 </div>
             </div>
         </template>
@@ -158,7 +161,8 @@ const onDialogClick = (e) => {
                         <span>{{ release.release_date }}</span>
                     </div>
                     <div v-if="acquiredDate" class="detail-row">
-                        <span>Acquired: {{ acquiredDate }}</span>
+                        <RiImportLine :width="14" />
+                        <span>{{ acquiredDate }}</span>
                     </div>
                     <div v-if="sourceName" class="detail-row">
                         <RiStore2Line :width="14" />
@@ -179,7 +183,7 @@ const onDialogClick = (e) => {
             v-if="showButtons"
             :id="`delete-confirm-${release.id}`"
             ref="deleteConfirmRef"
-            @click.self="onDialogClick"
+            @click.self.stop="onDialogClick"
         >
             <div class="dialog-content" @click.stop>
                 <RiCloseLine
@@ -205,6 +209,25 @@ const onDialogClick = (e) => {
                 </div>
             </div>
         </dialog>
+
+        <dialog
+            v-if="viewMode === 'list'"
+            :id="`view-details-${release.id}`"
+            ref="viewDialogRef"
+            @click.self.stop="onViewDialogClick"
+        >
+            <div class="dialog-content view-dialog-content" @click.stop>
+                <RiCloseLine
+                    class="close-icon"
+                    @click="viewDialogRef.close()"
+                />
+                <ReleaseCard
+                    :release="release"
+                    :showButtons="false"
+                    viewMode="grid"
+                />
+            </div>
+        </dialog>
     </div>
 </template>
 
@@ -219,10 +242,10 @@ const onDialogClick = (e) => {
     &.card--list {
         display: flex;
         flex-direction: row;
-        height: 138px;
+        height: 72px;
+        cursor: pointer;
 
         .card-image-wrap {
-            width: 138px;
             height: 100%;
             flex-shrink: 0;
         }
@@ -317,74 +340,39 @@ const onDialogClick = (e) => {
 // ── List mode ────────────────────────────────────────────
 .list-body {
     display: flex;
-    flex-direction: row;
     align-items: center;
-    gap: 2rem;
-    padding: 0.75rem 1rem;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 1rem;
     flex: 1;
     min-width: 0;
-    overflow: hidden;
-    position: relative;
-}
-
-.list-left {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    min-width: 0;
-    flex-shrink: 0;
-    max-width: 40%;
 }
 
 .list-info {
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
+    gap: 0.15rem;
     min-width: 0;
-    font-size: 0.85rem;
 
     strong {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
 }
 
-.list-right {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    min-width: 0;
-    margin-left: auto;
-    align-items: flex-end;
-    font-size: 0.8rem;
+.list-artist {
+    font-size: 0.85rem;
     color: $text-muted;
+}
 
-    .detail-row {
-        justify-content: flex-end;
-    }
+.list-release-date {
+    font-size: 0.75rem;
+    color: $text-muted;
 }
 
 .list-actions {
-    position: absolute;
-    top: 0.6rem;
-    right: 0.75rem;
     display: flex;
     gap: 0.3rem;
-}
-
-@media screen and (max-width: 430px) {
-    .list-body {
-        gap: 0.75rem;
-    }
-
-    .list-left {
-        flex: 1;
-        max-width: none;
-        padding-right: 4.5rem;
-    }
-
-    .list-right {
-        display: none;
-    }
+    flex-shrink: 0;
 }
 
 // ── Grid mode ────────────────────────────────────────────
@@ -446,6 +434,7 @@ const onDialogClick = (e) => {
 dialog {
     border: 0;
     background-color: transparent;
+    cursor: default;
 
     &::backdrop {
         background-color: rgba($secondary-muted, 0.5);
@@ -478,5 +467,36 @@ dialog {
     display: flex;
     gap: 1rem;
     margin-top: 1rem;
+}
+
+.view-dialog-content {
+    background-color: transparent;
+    border: none;
+    padding: 2.5rem 0 0;
+    width: min(360px, 92vw);
+    max-width: none;
+    color: $text;
+
+    .close-icon {
+        background-color: rgba($neutral-dark, 0.55);
+        color: $neutral-white;
+        border-radius: 50%;
+        padding: 0.3rem;
+        top: 0.5rem;
+        right: 0.5rem;
+
+        &:hover {
+            background-color: rgba($neutral-dark, 0.75);
+            color: $neutral-white;
+        }
+    }
+
+    :deep(.card) {
+        width: 100%;
+    }
+
+    :deep(.card-image-wrap) {
+        width: 100%;
+    }
 }
 </style>
