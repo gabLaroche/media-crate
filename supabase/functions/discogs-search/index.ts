@@ -1,5 +1,17 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, content-type",
+};
+
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json", ...CORS },
+  });
+}
+
 async function fetchDiscogs(path: string, token: string) {
   const res = await fetch(`https://api.discogs.com${path}`, {
     headers: {
@@ -67,21 +79,11 @@ async function lookupDiscogsId(
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, content-type",
-      },
-    });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Unauthorized" }, 401);
   }
 
   const supabase = createClient(
@@ -92,18 +94,12 @@ Deno.serve(async (req) => {
 
   const { error: authError } = await supabase.auth.getUser();
   if (authError) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Unauthorized" }, 401);
   }
 
   const discogsToken = Deno.env.get("DISCOGS_TOKEN");
   if (!discogsToken) {
-    return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Server misconfiguration" }, 500);
   }
 
   const url = new URL(req.url);
@@ -112,13 +108,7 @@ Deno.serve(async (req) => {
   if (lookupId) {
     const lookupType = url.searchParams.get("lookup_type");
     const result = await lookupDiscogsId(lookupId, lookupType, discogsToken);
-    return new Response(JSON.stringify(result), {
-      status: result.error ? 404 : 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    return json(result, result.error ? 404 : 200);
   }
 
   const params = new URLSearchParams();
@@ -143,11 +133,5 @@ Deno.serve(async (req) => {
 
   const data = await discogsRes.json();
 
-  return new Response(JSON.stringify(data), {
-    status: discogsRes.ok ? 200 : discogsRes.status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+  return json(data, discogsRes.ok ? 200 : discogsRes.status);
 });
