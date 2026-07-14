@@ -26,8 +26,10 @@ const emit = defineEmits(["resolved", "error"]);
 const { releases, fetchAll, fetchAllForUser } = useReleases();
 const { sources, fetchSources } = useSources();
 
-const ascending = ref(false);
-const sortState = ref("acquired_date");
+const SORT_BY_KEY = "releaseListSortBy";
+const SORT_ASCENDING_KEY = "releaseListSortAscending";
+const ascending = ref(localStorage.getItem(SORT_ASCENDING_KEY) === "true");
+const sortState = ref(localStorage.getItem(SORT_BY_KEY) || "acquired_date");
 const isFetching = ref(false);
 const searchText = ref("");
 const mediaTypeFilter = ref("");
@@ -36,6 +38,14 @@ const viewMode = ref(localStorage.getItem(VIEW_MODE_KEY) || "grid");
 
 watch(viewMode, (value) => {
     localStorage.setItem(VIEW_MODE_KEY, value);
+});
+
+watch(sortState, (value) => {
+    localStorage.setItem(SORT_BY_KEY, value);
+});
+
+watch(ascending, (value) => {
+    localStorage.setItem(SORT_ASCENDING_KEY, value);
 });
 
 const publicUserId = ref(null);
