@@ -76,9 +76,8 @@ const onDialogClick = (e) => {
                         }}</span>
                     </div>
                     <div class="list-info">
-                        <span class="info-label">Album</span>
                         <strong class="clamp">{{ release.album_name }}</strong>
-                        <span class="info-label">Artist</span>
+                        <span class="info-label">By</span>
                         <strong class="clamp">{{ release.artist }}</strong>
                         <div v-if="release.release_date" class="detail-row">
                             <RiCalendarLine :width="13" />
@@ -145,13 +144,10 @@ const onDialogClick = (e) => {
 
                 <div class="card-info">
                     <div class="info-block">
-                        <span class="info-label">Release</span>
                         <strong class="info-title">{{
                             release.album_name
                         }}</strong>
-                    </div>
-                    <div class="info-block">
-                        <span class="info-label">Artist</span>
+                        <span class="info-label">By</span>
                         <strong>{{ release.artist }}</strong>
                     </div>
                 </div>
