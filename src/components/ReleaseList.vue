@@ -26,7 +26,7 @@ const emit = defineEmits(["resolved", "error"]);
 const { releases, fetchAll, fetchAllForUser } = useReleases();
 const { sources, fetchSources } = useSources();
 
-const ascending = ref(true);
+const ascending = ref(false);
 const sortState = ref("acquired_date");
 const isFetching = ref(false);
 const searchText = ref("");
@@ -245,14 +245,18 @@ onMounted(init);
                             total
                         </div>
                         <div class="stat-pills">
-                            <div
+                            <template
                                 v-for="type in MEDIA_TYPES"
                                 :key="type.value"
-                                class="stat-pill"
                             >
-                                {{ typeCounts[type.value] }}
-                                {{ type.plural }}
-                            </div>
+                                <div
+                                    v-if="typeCounts[type.value] > 0"
+                                    class="stat-pill"
+                                >
+                                    {{ typeCounts[type.value] }}
+                                    {{ type.plural }}
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>

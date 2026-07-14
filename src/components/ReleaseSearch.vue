@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from "vue";
-import { searchRelease } from "@/lib/discogs";
+import { searchRelease, lookupReleaseById } from "@/lib/discogs";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { supabase } from "@/lib/supabase";
 
@@ -22,6 +22,11 @@ const loadingMore = ref(false);
 const isAutoFetching = ref(false);
 const autoFetchCount = ref(0);
 const autoFetchExhausted = ref(false);
+
+const idInput = ref("");
+const idLookupLoading = ref(false);
+const idLookupError = ref("");
+const viaIdLookup = ref(false);
 
 let autoFetchTimer = null;
 
@@ -91,6 +96,7 @@ const resetResults = () => {
     autoFetchCount.value = 0;
     autoFetchExhausted.value = false;
     isAutoFetching.value = false;
+    viaIdLookup.value = false;
     clearTimeout(autoFetchTimer);
 };
 
@@ -201,7 +207,70 @@ watch([textFilter, countryFilter], () => {
 
 const clear = () => {
     query.value = "";
+    idInput.value = "";
+    idLookupError.value = "";
     resetResults();
+};
+
+const shorthandTypes = { m: "master", r: "release" };
+
+const parseDiscogsIdInput = (value) => {
+    const trimmed = value.trim();
+
+    const urlMatch = trimmed.match(
+        /discogs\.com\/(?:[a-z-]+\/)?(release|master)\/(\d+)/i,
+    );
+    if (urlMatch) {
+        return { id: urlMatch[2], type: urlMatch[1].toLowerCase() };
+    }
+
+    const shorthandMatch = trimmed.match(/^\[?([mr])(\d+)\]?$/i);
+    if (shorthandMatch) {
+        return {
+            id: shorthandMatch[2],
+            type: shorthandTypes[shorthandMatch[1].toLowerCase()],
+        };
+    }
+
+    if (/^\d+$/.test(trimmed)) {
+        return { id: trimmed, type: null };
+    }
+
+    return null;
+};
+
+const lookupById = async () => {
+    const parsed = parseDiscogsIdInput(idInput.value);
+    if (!parsed) {
+        idLookupError.value =
+            "Enter a valid Discogs release/master ID or URL.";
+        return;
+    }
+
+    idLookupLoading.value = true;
+    idLookupError.value = "";
+
+    try {
+        const result = await lookupReleaseById(parsed);
+        const normalized = {
+            ...result,
+            cover_image: sanitizeCoverImage(result.cover_image),
+        };
+
+        results.value = [
+            normalized,
+            ...results.value.filter((r) => r.id !== normalized.id),
+        ];
+        hasSearched.value = true;
+        viaIdLookup.value = true;
+        textFilter.value = "";
+        countryFilter.value = "";
+        idInput.value = "";
+    } catch (err) {
+        idLookupError.value = err.message || "Release not found.";
+    } finally {
+        idLookupLoading.value = false;
+    }
 };
 
 const selectRelease = (r) => {
@@ -245,8 +314,26 @@ defineExpose({ clear });
             </button>
         </div>
 
+        <div class="id-lookup">
+            <input
+                v-model="idInput"
+                placeholder="Or paste a Discogs URL, master id, or release id"
+                @keydown.enter.prevent="lookupById"
+            />
+            <button
+                type="button"
+                @click="lookupById"
+                :disabled="!idInput.trim() || idLookupLoading"
+            >
+                {{ idLookupLoading ? "Looking up…" : "Add by ID" }}
+            </button>
+        </div>
+        <p v-if="idLookupError" class="id-lookup__error">
+            {{ idLookupError }}
+        </p>
+
         <template v-if="hasSearched">
-            <div v-if="results.length > 0" class="filters">
+            <div v-if="results.length > 0 && !viaIdLookup" class="filters">
                 <input
                     v-model="textFilter"
                     class="text-filter"
@@ -342,6 +429,27 @@ defineExpose({ clear });
 
         &__mode-toggle {
             flex-shrink: 0;
+        }
+    }
+
+    .id-lookup {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 10px;
+
+        @media (min-width: 768px) {
+            flex-direction: row;
+        }
+
+        &__error {
+            margin: 6px 0 0;
+            font-size: 0.85em;
+            color: $danger;
+        }
+
+        > input {
+            width: 248px;
         }
     }
 
