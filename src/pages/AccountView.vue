@@ -407,6 +407,7 @@ onMounted(() => {
 
 .section {
     background-color: $primary-muted;
+    color: $neutral-dark;
     border-radius: 8px;
     padding: 2.4rem;
     margin-bottom: 2.4rem;
@@ -470,6 +471,7 @@ dialog {
 
 .dialog-content {
     background-color: $secondary-muted;
+    color: $neutral-dark;
     border-radius: 8px;
     border: 1px solid $secondary-lighter;
     max-width: 420px;
@@ -546,6 +548,7 @@ dialog {
     gap: 1.2rem;
     padding: 1rem 1.2rem;
     background-color: $secondary-muted;
+    color: $neutral-dark;
     border-radius: 6px;
 
     &__info {

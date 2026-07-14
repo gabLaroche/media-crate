@@ -106,8 +106,8 @@ watch(search, (val) => {
         top: calc(100% + 2px);
         left: 0;
         right: 0;
-        background-color: $neutral-white;
-        border: 1px solid $neutral-light;
+        background-color: $surface;
+        border: 1px solid $border;
         border-top: none;
         border-radius: 0 0 4px 4px;
         max-height: 200px;
@@ -122,7 +122,8 @@ watch(search, (val) => {
             cursor: pointer;
 
             &:hover {
-                background-color: #f0f0f0;
+                background-color: $primary-muted;
+                color: $neutral-dark;
             }
         }
     }

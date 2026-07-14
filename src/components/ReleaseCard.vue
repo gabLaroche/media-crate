@@ -215,8 +215,8 @@ const onDialogClick = (e) => {
 <style lang="scss" scoped>
 // ── Shared ──────────────────────────────────────────────
 .card {
-    background-color: $neutral-white;
-    border: 1px solid $neutral-light;
+    background-color: $surface;
+    border: 1px solid $border;
     border-radius: 10px;
     overflow: hidden;
 
@@ -270,7 +270,7 @@ const onDialogClick = (e) => {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: $neutral-mid;
+    color: $text-muted;
 }
 
 .detail-row {
@@ -360,7 +360,7 @@ const onDialogClick = (e) => {
     margin-left: auto;
     align-items: flex-end;
     font-size: 0.8rem;
-    color: $neutral-mid;
+    color: $text-muted;
 
     .detail-row {
         justify-content: flex-end;
@@ -435,13 +435,13 @@ const onDialogClick = (e) => {
     flex-direction: column;
     gap: 0.35rem;
     font-size: 0.85rem;
-    color: $neutral-mid;
-    border-top: 1px solid $neutral-light;
+    color: $text-muted;
+    border-top: 1px solid $border;
     padding-top: 0.75rem;
 }
 
 .detail-row--notes {
-    border-top: 1px solid $neutral-light;
+    border-top: 1px solid $border;
     padding-top: 0.35rem;
     margin-top: 0.1rem;
 }
@@ -458,6 +458,7 @@ dialog {
 
 .dialog-content {
     background-color: $secondary-muted;
+    color: $neutral-dark;
     border-radius: 8px;
     border: 1px solid $secondary-lighter;
     max-width: 400px;

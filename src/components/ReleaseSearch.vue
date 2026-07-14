@@ -477,7 +477,7 @@ defineExpose({ clear });
             text-align: center;
             padding: 8px;
             font-size: 0.85em;
-            color: #888;
+            color: $text-muted;
         }
     }
 
@@ -521,12 +521,12 @@ defineExpose({ clear });
 
         &__year {
             font-size: 0.85em;
-            color: #888;
+            color: $text-muted;
         }
 
         &__country {
             font-size: 0.8em;
-            color: #aaa;
+            color: $text-muted;
             margin-left: auto;
             white-space: nowrap;
         }

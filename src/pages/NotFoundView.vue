@@ -35,7 +35,7 @@ const goHome = () => {
     align-items: center;
     justify-content: center;
     margin: -16px;
-    background-color: $primary-lighter;
+    background-color: $surface-page;
 
     &__content {
         display: flex;
@@ -54,7 +54,7 @@ const goHome = () => {
     &__divider {
         width: 1px;
         height: 80px;
-        background-color: $neutral-light;
+        background-color: $border;
     }
 
     &__body {
@@ -67,12 +67,12 @@ const goHome = () => {
         margin: 0;
         font-size: 1.25rem;
         font-weight: 700;
-        color: $neutral-dark;
+        color: $text;
     }
 
     &__message {
         margin: 0 0 0.75rem;
-        color: $neutral-mid;
+        color: $text-muted;
         font-size: 0.95rem;
     }
 

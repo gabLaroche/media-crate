@@ -47,7 +47,6 @@ const displayName = computed(
 </template>
 <style scoped lang="scss">
 .account-menu {
-    margin-left: auto;
     position: relative;
 }
 .account-btn {
@@ -66,7 +65,9 @@ const displayName = computed(
 }
 
 .account-popover {
-    border: transparent;
+    background-color: $surface;
+    color: $text;
+    border: 1px solid $border;
     padding: 1.6rem;
     position: absolute;
     inset: unset;

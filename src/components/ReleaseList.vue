@@ -317,7 +317,7 @@ onMounted(init);
 .control-label {
     font-size: 0.78rem;
     font-weight: 600;
-    color: $neutral-mid;
+    color: $text-muted;
     white-space: nowrap;
 }
 
@@ -341,7 +341,7 @@ onMounted(init);
         right: 0.65rem;
         top: 50%;
         transform: translateY(-50%);
-        color: $neutral-mid;
+        color: $text-muted;
         pointer-events: none;
     }
 }
