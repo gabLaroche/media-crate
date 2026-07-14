@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useAuth } from "@/composables/useAuth";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { sanitizeError } from "@/lib/sanitizeError";
 
 const { login } = useAuth();
@@ -10,6 +10,9 @@ const email = ref("");
 const password = ref("");
 const error = ref(null);
 const router = useRouter();
+const route = useRoute();
+
+const sessionExpired = route.query.reason === "session-expired";
 
 const submit = async () => {
     try {
@@ -25,6 +28,10 @@ const submit = async () => {
     <div>
         <h1>MediaCrate</h1>
         <h2>Login</h2>
+
+        <p v-if="sessionExpired" class="session-expired">
+            Your session timed out, please log in again.
+        </p>
 
         <form @submit.prevent="submit">
             <label for="email">Email:</label>
@@ -45,7 +52,7 @@ const submit = async () => {
     </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 h1 {
     text-align: center;
 }
@@ -56,5 +63,10 @@ form {
     gap: 1rem;
     min-width: 25vw;
     max-width: 400px;
+}
+
+.session-expired {
+    color: $warning-dark;
+    font-size: 0.9rem;
 }
 </style>

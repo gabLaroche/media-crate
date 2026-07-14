@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { supabase } from "@/lib/supabase";
+import { supabase, handleUnauthorized } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
 
 const releases = ref([]);
@@ -83,6 +83,11 @@ export function useReleases() {
         body: form,
       },
     );
+
+    if (res.status === 401) {
+      await handleUnauthorized();
+      throw new Error("Session expired");
+    }
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Upload failed.");
@@ -231,6 +236,11 @@ export function useReleases() {
       },
     );
 
+    if (res.status === 401) {
+      await handleUnauthorized();
+      throw new Error("Session expired");
+    }
+
     if (!res.ok) {
       const error = await res.json();
       throw new Error(error.message || "Bulk add failed");
@@ -252,6 +262,11 @@ export function useReleases() {
         },
       },
     );
+
+    if (res.status === 401) {
+      await handleUnauthorized();
+      return null;
+    }
 
     if (!res.ok) return null;
 

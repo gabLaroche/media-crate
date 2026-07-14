@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { vMaska } from "maska/vue";
 import { RiFileCopyLine } from "@remixicon/vue";
 import { useRouter } from "vue-router";
-import { supabase } from "@/lib/supabase";
+import { supabase, handleUnauthorized } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
 import { sanitizeError } from "@/lib/sanitizeError";
 
@@ -114,6 +114,11 @@ const deleteAccount = async () => {
             },
         },
     );
+
+    if (res.status === 401) {
+        await handleUnauthorized();
+        return;
+    }
 
     if (!res.ok) {
         const body = await res.json();

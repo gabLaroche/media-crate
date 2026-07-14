@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase, handleUnauthorized } from "@/lib/supabase";
 
 export async function searchRelease({ artist, title, page = 1 }) {
   const {
@@ -18,6 +18,10 @@ export async function searchRelease({ artist, title, page = 1 }) {
     },
   );
 
+  if (res.status === 401) {
+    await handleUnauthorized();
+    throw new Error("Session expired");
+  }
   if (!res.ok) throw new Error("Discogs search failed");
   return res.json();
 }
@@ -39,6 +43,10 @@ export async function lookupReleaseById({ id, type }) {
     },
   );
 
+  if (res.status === 401) {
+    await handleUnauthorized();
+    throw new Error("Session expired");
+  }
   if (!res.ok) throw new Error("Discogs lookup failed");
   const data = await res.json();
   if (data.error || !data.results?.length) {
