@@ -2,55 +2,64 @@
 import { RiSunLine, RiMoonLine, RiMenuLine } from "@remixicon/vue";
 import AccountMenu from "@/components/AccountMenu.vue";
 import { useTheme } from "@/composables/useTheme";
+import { useAuth } from "@/composables/useAuth";
 
 const { theme, toggleTheme } = useTheme();
+const { user } = useAuth();
 </script>
 
 <template>
     <nav class="navbar">
-        <button
-            type="button"
-            class="nav-toggle"
-            popovertarget="mobile-nav-popover"
-            aria-label="Open menu"
-        >
-            <RiMenuLine />
-        </button>
+        <template v-if="user">
+            <button
+                type="button"
+                class="nav-toggle"
+                popovertarget="mobile-nav-popover"
+                aria-label="Open menu"
+            >
+                <RiMenuLine />
+            </button>
 
-        <div class="nav-links">
-            <router-link to="/">Collection</router-link>
-            <router-link to="/add">Add</router-link>
-            <router-link to="/bulk-add">Bulk Add</router-link>
-            <router-link to="/random">Random</router-link>
-        </div>
-
-        <div class="mobile-nav" id="mobile-nav-popover" popover>
-            <div class="mobile-nav__container">
-                <router-link
-                    to="/"
-                    popovertarget="mobile-nav-popover"
-                    popovertargetaction="hide"
-                    >Collection</router-link
-                >
-                <router-link
-                    to="/add"
-                    popovertarget="mobile-nav-popover"
-                    popovertargetaction="hide"
-                    >Add</router-link
-                >
-                <router-link
-                    to="/bulk-add"
-                    popovertarget="mobile-nav-popover"
-                    popovertargetaction="hide"
-                    >Bulk Add</router-link
-                >
-                <router-link
-                    to="/random"
-                    popovertarget="mobile-nav-popover"
-                    popovertargetaction="hide"
-                    >Random</router-link
-                >
+            <div class="nav-links">
+                <router-link to="/">Collection</router-link>
+                <router-link to="/add">Add</router-link>
+                <router-link to="/bulk-add">Bulk Add</router-link>
+                <router-link to="/random">Random</router-link>
             </div>
+
+            <div class="mobile-nav" id="mobile-nav-popover" popover>
+                <div class="mobile-nav__container">
+                    <router-link
+                        to="/"
+                        popovertarget="mobile-nav-popover"
+                        popovertargetaction="hide"
+                        >Collection</router-link
+                    >
+                    <router-link
+                        to="/add"
+                        popovertarget="mobile-nav-popover"
+                        popovertargetaction="hide"
+                        >Add</router-link
+                    >
+                    <router-link
+                        to="/bulk-add"
+                        popovertarget="mobile-nav-popover"
+                        popovertargetaction="hide"
+                        >Bulk Add</router-link
+                    >
+                    <router-link
+                        to="/random"
+                        popovertarget="mobile-nav-popover"
+                        popovertargetaction="hide"
+                        >Random</router-link
+                    >
+                </div>
+            </div>
+        </template>
+
+        <div v-else class="auth-links">
+            <router-link to="/login">Log in</router-link>
+            <router-link to="/create-account">Sign up</router-link>
         </div>
 
         <div class="nav-end">
@@ -67,7 +76,7 @@ const { theme, toggleTheme } = useTheme();
                 <RiSunLine v-if="theme === 'dark'" />
                 <RiMoonLine v-else />
             </button>
-            <AccountMenu />
+            <AccountMenu v-if="user" />
         </div>
     </nav>
 </template>
@@ -113,6 +122,12 @@ const { theme, toggleTheme } = useTheme();
         align-items: center;
         gap: 2rem;
     }
+}
+
+.auth-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
 }
 
 .mobile-nav {

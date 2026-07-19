@@ -3,6 +3,7 @@ import { useAuth } from "@/composables/useAuth";
 
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import MainLayout from "@/layouts/MainLayout.vue";
+import PublicLayout from "@/layouts/PublicLayout.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -150,9 +151,15 @@ const router = createRouter({
     },
     {
       path: "/collection/:slug",
-      name: "public-collection",
-      component: () => import("@/pages/CollectionPublicView.vue"),
-      meta: { title: "Collection | MediaCrate" },
+      component: PublicLayout,
+      children: [
+        {
+          path: "",
+          name: "public-collection",
+          component: () => import("@/pages/CollectionPublicView.vue"),
+          meta: { title: "Collection | MediaCrate" },
+        },
+      ],
     },
     {
       path: "/:pathMatch(.*)*",

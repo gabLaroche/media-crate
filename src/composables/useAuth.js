@@ -47,6 +47,7 @@ export function useAuth() {
 
   const logout = async () => {
     await supabase.auth.signOut();
+    user.value = null;
     if ("caches" in window) {
       await caches.delete("api-cache");
     }
