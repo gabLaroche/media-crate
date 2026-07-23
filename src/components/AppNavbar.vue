@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from "vue";
 import { RiSunLine, RiMoonLine, RiMenuLine } from "@remixicon/vue";
 import AccountMenu from "@/components/AccountMenu.vue";
 import { useTheme } from "@/composables/useTheme";
@@ -6,6 +7,9 @@ import { useAuth } from "@/composables/useAuth";
 
 const { theme, toggleTheme } = useTheme();
 const { user } = useAuth();
+
+const mobileNavRef = ref(null);
+const closeMobileNav = () => mobileNavRef.value?.hidePopover();
 </script>
 
 <template>
@@ -27,30 +31,23 @@ const { user } = useAuth();
                 <router-link to="/random">Random</router-link>
             </div>
 
-            <div class="mobile-nav" id="mobile-nav-popover" popover>
+            <div
+                class="mobile-nav"
+                id="mobile-nav-popover"
+                popover
+                ref="mobileNavRef"
+            >
                 <div class="mobile-nav__container">
-                    <router-link
-                        to="/"
-                        popovertarget="mobile-nav-popover"
-                        popovertargetaction="hide"
+                    <router-link to="/" @click="closeMobileNav"
                         >Collection</router-link
                     >
-                    <router-link
-                        to="/add"
-                        popovertarget="mobile-nav-popover"
-                        popovertargetaction="hide"
+                    <router-link to="/add" @click="closeMobileNav"
                         >Add</router-link
                     >
-                    <router-link
-                        to="/bulk-add"
-                        popovertarget="mobile-nav-popover"
-                        popovertargetaction="hide"
+                    <router-link to="/bulk-add" @click="closeMobileNav"
                         >Bulk Add</router-link
                     >
-                    <router-link
-                        to="/random"
-                        popovertarget="mobile-nav-popover"
-                        popovertargetaction="hide"
+                    <router-link to="/random" @click="closeMobileNav"
                         >Random</router-link
                     >
                 </div>
