@@ -147,6 +147,14 @@ const router = createRouter({
             title: "Random release | MediaCrate",
           },
         },
+        {
+          path: "stats",
+          name: "stats",
+          component: () => import("@/pages/StatsView.vue"),
+          meta: {
+            title: "Collection stats | MediaCrate",
+          },
+        },
       ],
     },
     {

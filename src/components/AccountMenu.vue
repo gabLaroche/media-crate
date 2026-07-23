@@ -1,11 +1,14 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useAuth } from "@/composables/useAuth";
 import { useRouter } from "vue-router";
 import { RiAccountCircle2Line, RiLogoutBoxLine } from "@remixicon/vue";
 
 const router = useRouter();
 const { logout, user } = useAuth();
+
+const popoverRef = ref(null);
+const closePopover = () => popoverRef.value?.hidePopover();
 
 const onLogout = async () => {
     await logout();
@@ -22,17 +25,21 @@ const displayName = computed(
             <RiAccountCircle2Line />
         </button>
 
-        <div class="account-popover" id="account-popover" popover>
+        <div
+            class="account-popover"
+            id="account-popover"
+            popover
+            ref="popoverRef"
+        >
             <div class="account-popover__container">
                 <div class="account-popover__display-name">
                     Hi {{ displayName }}!
                 </div>
-                <router-link
-                    to="/account"
-                    popovertarget="account-popover"
-                    popovertargetaction="hide"
-                >
+                <router-link to="/account" @click="closePopover">
                     My account
+                </router-link>
+                <router-link to="/stats" @click="closePopover">
+                    Stats
                 </router-link>
                 <button
                     class="account-popover__logout button button--link-style"
