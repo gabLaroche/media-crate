@@ -81,8 +81,9 @@ const hasMorePages = computed(
 
 const isSelected = (r) => props.selectedIds?.includes(r.id);
 
-const toggleSearchMode = () => {
-    searchMode.value = searchMode.value === "artist" ? "title" : "artist";
+const setSearchMode = (mode) => {
+    if (searchMode.value === mode) return;
+    searchMode.value = mode;
     query.value = "";
     resetResults();
 };
@@ -289,53 +290,77 @@ defineExpose({ clear });
 
 <template>
     <div class="release-search">
-        <h3>Search</h3>
+        <div class="search-card">
+            <div class="search-row">
+                <div class="mode-toggle">
+                    <button
+                        type="button"
+                        :class="[
+                            'mode-toggle__btn',
+                            {
+                                'mode-toggle__btn--active':
+                                    searchMode === 'artist',
+                            },
+                        ]"
+                        @click="setSearchMode('artist')"
+                    >
+                        Artist
+                    </button>
+                    <button
+                        type="button"
+                        :class="[
+                            'mode-toggle__btn',
+                            {
+                                'mode-toggle__btn--active':
+                                    searchMode === 'title',
+                            },
+                        ]"
+                        @click="setSearchMode('title')"
+                    >
+                        Album
+                    </button>
+                </div>
+                <input
+                    v-model="query"
+                    class="search-input"
+                    :placeholder="
+                        searchMode === 'artist'
+                            ? 'Search by artist…'
+                            : 'Search by album…'
+                    "
+                    @keydown.enter.prevent="search"
+                />
+                <button
+                    type="button"
+                    @click="search"
+                    :disabled="!query.trim() || loading"
+                >
+                    {{ loading ? "Searching…" : "Search" }}
+                </button>
+            </div>
 
-        <div class="search">
-            <button
-                type="button"
-                class="search__mode-toggle"
-                @click="toggleSearchMode"
-            >
-                {{ searchMode === "artist" ? "Artist" : "Title" }}
-            </button>
-            <input
-                v-model="query"
-                :placeholder="
-                    searchMode === 'artist'
-                        ? 'Search by artist…'
-                        : 'Search by title…'
-                "
-                @keydown.enter.prevent="search"
-            />
-            <button
-                type="button"
-                @click="search"
-                :disabled="!query.trim() || loading"
-            >
-                {{ loading ? "Searching…" : "Search" }}
-            </button>
+            <div class="search-row">
+                <input
+                    v-model="idInput"
+                    class="search-input"
+                    placeholder="Paste a Discogs URL, master ID, or release ID…"
+                    @keydown.enter.prevent="lookupById"
+                />
+                <button
+                    type="button"
+                    class="button button--outline"
+                    @click="lookupById"
+                    :disabled="!idInput.trim() || idLookupLoading"
+                >
+                    {{ idLookupLoading ? "Looking up…" : "Add by ID" }}
+                </button>
+            </div>
+            <p v-if="idLookupError" class="id-lookup__error">
+                {{ idLookupError }}
+            </p>
         </div>
 
-        <div class="id-lookup">
-            <input
-                v-model="idInput"
-                placeholder="Or paste a Discogs URL, master id, or release id"
-                @keydown.enter.prevent="lookupById"
-            />
-            <button
-                type="button"
-                @click="lookupById"
-                :disabled="!idInput.trim() || idLookupLoading"
-            >
-                {{ idLookupLoading ? "Looking up…" : "Add by ID" }}
-            </button>
-        </div>
-        <p v-if="idLookupError" class="id-lookup__error">
-            {{ idLookupError }}
-        </p>
-
-        <template v-if="hasSearched">
+        <div v-if="hasSearched" class="results-card">
             <div v-if="results.length > 0 && !viaIdLookup" class="filters">
                 <input
                     v-model="textFilter"
@@ -365,6 +390,7 @@ defineExpose({ clear });
                     !loadingMore &&
                     !isAutoFetching
                 "
+                class="results-status"
             >
                 {{
                     autoFetchExhausted
@@ -377,6 +403,7 @@ defineExpose({ clear });
                     filteredResults.length === 0 &&
                     (loadingMore || isAutoFetching)
                 "
+                class="results-status"
             >
                 Searching for more results…
             </p>
@@ -413,150 +440,196 @@ defineExpose({ clear });
                     Loading more…
                 </div>
             </div>
-        </template>
+        </div>
     </div>
 </template>
 
 <style lang="scss" scoped>
 .release-search {
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
 
-    .search {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+.search-card {
+    background-color: $surface;
+    border: 1px solid $border;
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
 
-        @media (min-width: 768px) {
-            flex-direction: row;
+.search-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+    }
+
+    .button {
+        flex-shrink: 0;
+    }
+}
+
+.search-input {
+    flex: 1;
+    min-width: 0;
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+}
+
+.mode-toggle {
+    display: flex;
+    flex-shrink: 0;
+    border: 1px solid $border;
+    border-radius: 8px;
+    overflow: hidden;
+
+    &__btn {
+        background-color: transparent;
+        color: $text;
+        border: none;
+        border-radius: 0;
+        padding: 0.65rem 1.1rem;
+
+        &:hover {
+            background-color: rgba($primary, 0.12);
         }
 
-        &__mode-toggle {
-            flex-shrink: 0;
+        &--active {
+            background-color: $primary;
+            color: $neutral-white;
+
+            &:hover {
+                background-color: $primary;
+            }
+        }
+    }
+}
+
+.id-lookup__error {
+    margin: 0;
+    font-size: 0.85em;
+    color: $danger;
+}
+
+.results-card {
+    background-color: $surface;
+    border: 1px solid $border;
+    border-radius: 10px;
+    padding: 1.25rem;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 0.75rem;
+}
+
+.text-filter {
+    flex: 1;
+    border-radius: 8px;
+}
+
+.filter {
+    flex-shrink: 0;
+    border-radius: 8px;
+}
+
+.results-status {
+    margin: 0;
+    color: $text-muted;
+    font-size: 0.9rem;
+}
+
+.results {
+    max-height: 320px;
+    overflow-y: auto;
+
+    &__loading-more {
+        text-align: center;
+        padding: 8px;
+        font-size: 0.85em;
+        color: $text-muted;
+    }
+}
+
+.result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.5rem;
+    margin: 4px 0;
+    cursor: pointer;
+    border-radius: 8px;
+
+    &:hover:not(.result--selected) {
+        background: rgba($primary, 0.12);
+    }
+
+    &--selected {
+        opacity: 0.5;
+
+        &:hover {
+            background: rgba($danger, 0.08);
         }
     }
 
-    .id-lookup {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        margin-top: 10px;
-
-        @media (min-width: 768px) {
-            flex-direction: row;
-        }
-
-        &__error {
-            margin: 6px 0 0;
-            font-size: 0.85em;
-            color: $danger;
-        }
-
-        > input {
-            width: 248px;
-        }
+    &--local {
+        border-left: 2px solid $secondary-lighter;
+        padding-left: 8px;
     }
 
-    .filters {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    .text-filter {
+    &__info {
         flex: 1;
+        display: flex;
+        gap: 6px;
+        align-items: baseline;
+        flex-wrap: wrap;
     }
 
-    .filter {
+    &__title {
+        font-weight: 500;
+    }
+
+    &__year {
+        font-size: 0.85em;
+        color: $text-muted;
+    }
+
+    &__country {
+        font-size: 0.8em;
+        color: $text-muted;
+        margin-left: auto;
+        white-space: nowrap;
+    }
+
+    &__badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba($secondary-lighter, 0.15);
+        color: $secondary-lighter;
+        white-space: nowrap;
         flex-shrink: 0;
     }
 
-    .results {
-        max-width: 500px;
-        max-height: 300px;
-        overflow-y: auto;
-        margin-top: 10px;
-
-        &__loading-more {
-            text-align: center;
-            padding: 8px;
-            font-size: 0.85em;
-            color: $text-muted;
-        }
+    &__check {
+        font-size: 1.1em;
+        color: $success-dark;
     }
 
-    .result {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 6px;
-        margin: 4px 0;
-        cursor: pointer;
-        border-radius: 4px;
-
-        &:hover:not(.result--selected) {
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        &--selected {
-            opacity: 0.5;
-
-            &:hover {
-                background: rgba(255, 0, 0, 0.05);
-            }
-        }
-
-        &--local {
-            border-left: 2px solid $secondary-lighter;
-            padding-left: 8px;
-        }
-
-        &__info {
-            flex: 1;
-            display: flex;
-            gap: 6px;
-            align-items: baseline;
-            flex-wrap: wrap;
-        }
-
-        &__title {
-            font-weight: 500;
-        }
-
-        &__year {
-            font-size: 0.85em;
-            color: $text-muted;
-        }
-
-        &__country {
-            font-size: 0.8em;
-            color: $text-muted;
-            margin-left: auto;
-            white-space: nowrap;
-        }
-
-        &__badge {
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba($secondary-lighter, 0.15);
-            color: $secondary-lighter;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        &__check {
-            font-size: 1.1em;
-            color: $success-dark;
-        }
-
-        img {
-            object-fit: cover;
-            border-radius: 3px;
-            flex-shrink: 0;
-            width: 50px;
-            height: 50px;
-        }
+    img {
+        object-fit: cover;
+        border-radius: 6px;
+        flex-shrink: 0;
+        width: 50px;
+        height: 50px;
     }
 }
 </style>

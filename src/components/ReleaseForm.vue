@@ -260,93 +260,140 @@ const resetBulkForm = () => {
 </script>
 
 <template>
-    <!-- ======= SINGLE / EDIT MODE ======= -->
-    <template v-if="!bulk">
-        <ReleaseSearch
-            v-if="!release"
-            ref="releaseSearchRef"
-            @selected="autofill"
-        />
-
-        <form @submit.prevent="handleSubmit">
-            <BulkRow
-                :row="row"
-                :removable="false"
-                :editable="!release"
-                :quotaExceeded="quotaExceeded"
-                @update:row="row = $event"
+    <div class="release-form">
+        <!-- ======= SINGLE / EDIT MODE ======= -->
+        <template v-if="!bulk">
+            <ReleaseSearch
+                v-if="!release"
+                ref="releaseSearchRef"
+                @selected="autofill"
             />
 
-            <div class="form-footer">
-                <button
-                    v-if="!release"
-                    type="button"
-                    class="button button--outline"
-                    @click="resetRow"
-                >
-                    Reset
-                </button>
-                <button :disabled="isSingleDisabled || isSubmitting">
-                    {{ release ? "Update Release" : "Add Release" }}
-                </button>
-            </div>
-        </form>
-    </template>
-
-    <!-- ======= BULK MODE ======= -->
-    <template v-else>
-        <ReleaseSearch
-            ref="bulkReleaseSearchRef"
-            :selectedIds="selectedDiscogsIds"
-            @selected="onDiscogsSelected"
-            @deselected="onDiscogsDeselected"
-        />
-
-        <form @submit.prevent="handleSubmit">
-            <div class="bulk-rows" v-if="bulkRows.length > 0">
+            <form @submit.prevent="handleSubmit">
                 <BulkRow
-                    v-for="r in bulkRows"
-                    :key="r.id"
-                    :row="r"
+                    :row="row"
+                    :removable="false"
+                    :editable="!release"
                     :quotaExceeded="quotaExceeded"
-                    @update:row="updateRow"
-                    @remove="removeRow(r.id)"
+                    @update:row="row = $event"
                 />
-            </div>
 
-            <p v-else class="bulk-empty">
-                Search for an artist above and select releases to add them here.
-            </p>
+                <div class="form-footer">
+                    <button
+                        v-if="!release"
+                        type="button"
+                        class="button button--outline"
+                        @click="resetRow"
+                    >
+                        Reset
+                    </button>
+                    <button :disabled="isSingleDisabled || isSubmitting">
+                        {{ release ? "Update Release" : "Add Release" }}
+                    </button>
+                </div>
+            </form>
+        </template>
 
-            <button type="button" @click="addEmptyRow">+ Add Manually</button>
+        <!-- ======= BULK MODE ======= -->
+        <template v-else>
+            <ReleaseSearch
+                ref="bulkReleaseSearchRef"
+                :selectedIds="selectedDiscogsIds"
+                @selected="onDiscogsSelected"
+                @deselected="onDiscogsDeselected"
+            />
 
-            <div class="form-footer">
+            <form @submit.prevent="handleSubmit">
+                <div class="bulk-rows" v-if="bulkRows.length > 0">
+                    <BulkRow
+                        v-for="r in bulkRows"
+                        :key="r.id"
+                        :row="r"
+                        :quotaExceeded="quotaExceeded"
+                        @update:row="updateRow"
+                        @remove="removeRow(r.id)"
+                    />
+                </div>
+
+                <p v-else class="bulk-empty">
+                    Search for an artist above and select releases to add
+                    them here.
+                </p>
+
                 <button
                     type="button"
-                    class="button button--outline"
-                    @click="resetBulkForm"
+                    class="add-manually"
+                    @click="addEmptyRow"
                 >
-                    Reset
+                    + Add Manually
                 </button>
-                <button
-                    type="submit"
-                    :disabled="isBulkDisabled || isSubmitting"
-                >
-                    {{
-                        isSubmitting
-                            ? "Adding…"
-                            : `Add ${bulkRows.length} Release${bulkRows.length !== 1 ? "s" : ""}`
-                    }}
-                </button>
-            </div>
-        </form>
-    </template>
+
+                <div class="form-footer">
+                    <button
+                        type="button"
+                        class="button button--outline"
+                        @click="resetBulkForm"
+                    >
+                        Reset
+                    </button>
+                    <button
+                        type="submit"
+                        :disabled="isBulkDisabled || isSubmitting"
+                    >
+                        {{
+                            isSubmitting
+                                ? "Adding…"
+                                : `Add ${bulkRows.length} Release${bulkRows.length !== 1 ? "s" : ""}`
+                        }}
+                    </button>
+                </div>
+            </form>
+        </template>
+    </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+.release-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.bulk-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.bulk-empty {
+    margin: 0;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    color: $text-muted;
+    background-color: rgba($border, 0.2);
+    border: 1px dashed $border;
+    border-radius: 10px;
+}
+
+.add-manually {
+    background-color: $primary-muted;
+    color: $primary-dark;
+    border: 1px dashed $primary;
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-weight: 700;
+
+    &:hover {
+        background-color: $primary-light;
+        color: $neutral-white;
+    }
+}
+
 .form-footer {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid $border;
 }
 </style>

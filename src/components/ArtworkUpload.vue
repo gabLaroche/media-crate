@@ -163,6 +163,7 @@ defineExpose({ clear });
                         disabled || processing,
                 }"
                 :aria-disabled="disabled || processing"
+                title="JPEG · PNG · WebP · max 1MB · cropped to square"
             >
                 <span v-if="processing" class="artwork-upload__status"
                     >Processing…</span
@@ -177,9 +178,6 @@ defineExpose({ clear });
                 <template v-else>
                     <RiUpload2Line class="artwork-upload__icon" />
                     <span class="artwork-upload__label">Upload artwork</span>
-                    <span class="artwork-upload__hint"
-                        >JPEG · PNG · WebP · max 1MB · cropped to square</span
-                    >
                 </template>
 
                 <input
@@ -208,8 +206,8 @@ defineExpose({ clear });
 
         img {
             display: block;
-            width: 150px;
-            height: 150px;
+            width: 110px;
+            height: 110px;
             object-fit: cover;
             border-radius: 6px;
         }
@@ -241,21 +239,22 @@ defineExpose({ clear });
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 4px;
-        width: 150px;
-        height: 150px;
-        border: 2px dashed rgba($secondary-lighter, 0.4);
+        gap: 6px;
+        width: 110px;
+        height: 110px;
+        border: 2px dashed $border;
         border-radius: 6px;
         cursor: pointer;
         transition:
             border-color 0.15s,
             background 0.15s;
         text-align: center;
-        padding: 12px;
+        padding: 16px;
+        box-sizing: border-box;
 
         &:hover:not(&--disabled) {
-            border-color: $secondary-lighter;
-            background: rgba($secondary-lighter, 0.05);
+            border-color: $primary;
+            background: rgba($primary, 0.05);
         }
 
         &--disabled {
@@ -277,12 +276,6 @@ defineExpose({ clear });
     &__label {
         font-size: 0.8rem;
         font-weight: 600;
-    }
-
-    &__hint {
-        font-size: 0.68rem;
-        opacity: 0.5;
-        line-height: 1.3;
     }
 
     &__status {
