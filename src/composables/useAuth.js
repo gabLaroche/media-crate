@@ -2,6 +2,7 @@ import { ref } from "vue";
 import { supabase } from "@/lib/supabase";
 
 const user = ref(null);
+export const HAS_LOGGED_IN_KEY = "hasLoggedInBefore";
 
 export function useAuth() {
   const fetchProfile = async (userId) => {
@@ -18,6 +19,7 @@ export function useAuth() {
       user.value = null;
       return;
     }
+    localStorage.setItem(HAS_LOGGED_IN_KEY, "true");
     const profile = await fetchProfile(authUser.id);
     user.value = {
       ...authUser,
@@ -42,8 +44,14 @@ export function useAuth() {
       options: { data: { display_name: displayName } },
     });
 
-  const login = (email, password) =>
-    supabase.auth.signInWithPassword({ email, password });
+  const login = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (data?.user) await setUser(data.user);
+    return { error };
+  };
 
   const logout = async () => {
     await supabase.auth.signOut();

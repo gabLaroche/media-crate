@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useAuth } from "@/composables/useAuth";
+import { useAuth, HAS_LOGGED_IN_KEY } from "@/composables/useAuth";
 
 import AuthLayout from "@/layouts/AuthLayout.vue";
 import MainLayout from "@/layouts/MainLayout.vue";
@@ -8,6 +8,20 @@ import PublicLayout from "@/layouts/PublicLayout.vue";
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    {
+      path: "/welcome",
+      component: PublicLayout,
+      children: [
+        {
+          path: "",
+          name: "welcome",
+          component: () => import("@/pages/WelcomeView.vue"),
+          meta: {
+            title: "MediaCrate",
+          },
+        },
+      ],
+    },
     {
       path: "/login",
       component: AuthLayout,
@@ -190,8 +204,15 @@ router.beforeEach((to) => {
   const { user } = useAuth();
   const loggedIn = !!user.value;
 
-  if (to.meta.requiresAuth && !loggedIn) return "/login";
-  if (loggedIn && to.path === "/login") return "/";
+  if (to.meta.requiresAuth && !loggedIn) {
+    // Always show the landing page in local dev so it's easy to work on
+    // without repeatedly clearing localStorage.
+    const hasLoggedInBefore =
+      !import.meta.env.DEV &&
+      localStorage.getItem(HAS_LOGGED_IN_KEY) === "true";
+    return hasLoggedInBefore ? "/login" : "/welcome";
+  }
+  if (loggedIn && (to.path === "/login" || to.path === "/welcome")) return "/";
 });
 
 export default router;

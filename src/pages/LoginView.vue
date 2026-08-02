@@ -16,7 +16,14 @@ const sessionExpired = route.query.reason === "session-expired";
 
 const submit = async () => {
     try {
-        await login(email.value, password.value);
+        const { error: loginError } = await login(
+            email.value,
+            password.value,
+        );
+        if (loginError) {
+            error.value = sanitizeError(loginError);
+            return;
+        }
         router.push({ path: "/" });
     } catch (err) {
         error.value = sanitizeError(err);

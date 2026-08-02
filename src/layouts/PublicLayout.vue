@@ -10,3 +10,17 @@ import AppNavbar from "@/components/AppNavbar.vue";
         </main>
     </div>
 </template>
+
+<style scoped>
+.main-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+</style>
