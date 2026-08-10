@@ -9,6 +9,7 @@ import {
     RiBarChartLine,
     RiTimeLine,
     RiPriceTag3Line,
+    RiHistoryLine,
 } from "@remixicon/vue";
 import { useReleases } from "@/composables/useReleases";
 import { useSources } from "@/composables/useSources";
@@ -51,31 +52,33 @@ const newestReleaseYear = computed(() =>
     releaseYears.value.length ? Math.max(...releaseYears.value) : null,
 );
 
-// Groups items by a derived key and returns the most frequent one.
-const topByCount = (items, keyFn) => {
+const sourceNameById = computed(
+    () => new Map(sources.value.map((s) => [s.id, s.name])),
+);
+
+// Counts occurrences of a derived key, ranked highest-first.
+const rankByCount = (items, keyFn) => {
     const counts = new Map();
     for (const item of items) {
         const key = keyFn(item);
         if (!key) continue;
         counts.set(key, (counts.get(key) ?? 0) + 1);
     }
-
-    let top = null;
-    for (const [name, count] of counts) {
-        if (!top || count > top.count) top = { name, count };
-    }
-    return top;
+    return [...counts.entries()]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
 };
 
-const topArtist = computed(() => topByCount(releases.value, (r) => r.artist));
-
-const sourceNameById = computed(
-    () => new Map(sources.value.map((s) => [s.id, s.name])),
-);
-
-const topSource = computed(() =>
-    topByCount(releases.value, (r) => sourceNameById.value.get(r.source_id)),
-);
+// Scales a list of {name, count} against its own highest count, for
+// histogram-style bars (tallest bar = 100%) rather than share-of-total.
+const relativeToMax = (entries) => {
+    const max = Math.max(...entries.map((e) => e.count), 0);
+    return entries.map((e) => ({
+        label: e.name,
+        count: e.count,
+        percent: max ? Math.round((e.count / max) * 100) : 0,
+    }));
+};
 
 const breakdown = (counts) => {
     const entries = Object.entries(counts).filter(([, count]) => count > 0);
@@ -89,6 +92,47 @@ const breakdown = (counts) => {
         }))
         .sort((a, b) => b.count - a.count);
 };
+
+const TOP_N = 5;
+
+const topArtists = computed(() =>
+    relativeToMax(rankByCount(releases.value, (r) => r.artist).slice(0, TOP_N)),
+);
+
+const sourceBreakdown = computed(() => {
+    const ranked = rankByCount(releases.value, (r) =>
+        sourceNameById.value.get(r.source_id),
+    );
+    const entries = ranked.slice(0, TOP_N);
+    const rest = ranked.slice(TOP_N);
+    if (rest.length) {
+        entries.push({
+            name: "Other",
+            count: rest.reduce((sum, s) => sum + s.count, 0),
+        });
+    }
+    // Not run through breakdown() - "Other" should stay pinned last
+    // rather than getting re-sorted by count.
+    return entries.map((e) => ({
+        label: e.name,
+        count: e.count,
+        percent: totalReleases.value
+            ? Math.round((e.count / totalReleases.value) * 100)
+            : 0,
+    }));
+});
+
+const decadeBreakdown = computed(() => {
+    const counts = new Map();
+    for (const year of releaseYears.value) {
+        const decade = `${Math.floor(year / 10) * 10}s`;
+        counts.set(decade, (counts.get(decade) ?? 0) + 1);
+    }
+    const entries = [...counts.entries()]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => parseInt(a.name) - parseInt(b.name));
+    return relativeToMax(entries);
+});
 
 const formatBreakdown = computed(() => {
     const counts = { CD: 0, Vinyl: 0, Cassette: 0 };
@@ -165,24 +209,6 @@ const formatDate = (value) =>
                     <span class="stat-card__label">Release year range</span>
                 </div>
 
-                <div v-if="topArtist" class="stat-card">
-                    <RiUserStarLine class="stat-card__icon" />
-                    <span class="stat-card__value">{{ topArtist.name }}</span>
-                    <span class="stat-card__label"
-                        >Most collected artist ({{ topArtist.count }}
-                        release{{ topArtist.count !== 1 ? "s" : "" }})</span
-                    >
-                </div>
-
-                <div v-if="topSource" class="stat-card">
-                    <RiStore2Line class="stat-card__icon" />
-                    <span class="stat-card__value">{{ topSource.name }}</span>
-                    <span class="stat-card__label"
-                        >Most used source ({{ topSource.count }}
-                        release{{ topSource.count !== 1 ? "s" : "" }})</span
-                    >
-                </div>
-
                 <div v-if="firstAcquiredDate" class="stat-card">
                     <RiCalendarLine class="stat-card__icon" />
                     <span class="stat-card__value">{{
@@ -191,6 +217,78 @@ const formatDate = (value) =>
                     <span class="stat-card__label"
                         >First release added to your collection</span
                     >
+                </div>
+
+                <div v-if="topArtists.length" class="stat-card">
+                    <RiUserStarLine class="stat-card__icon" />
+                    <span class="stat-card__label stat-card__label--heading"
+                        >Top artists</span
+                    >
+                    <div class="stat-card__bars">
+                        <div
+                            v-for="a in topArtists"
+                            :key="a.label"
+                            class="bar"
+                        >
+                            <span class="bar__label"
+                                >{{ a.label }} ({{ a.count }})</span
+                            >
+                            <div class="bar__track">
+                                <div
+                                    class="bar__fill"
+                                    :style="{ width: `${a.percent}%` }"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="sourceBreakdown.length" class="stat-card">
+                    <RiStore2Line class="stat-card__icon" />
+                    <span class="stat-card__label stat-card__label--heading"
+                        >Top sources</span
+                    >
+                    <div class="stat-card__bars">
+                        <div
+                            v-for="s in sourceBreakdown"
+                            :key="s.label"
+                            class="bar"
+                        >
+                            <span class="bar__label"
+                                >{{ s.label }} ({{ s.count }})</span
+                            >
+                            <div class="bar__track">
+                                <div
+                                    class="bar__fill"
+                                    :style="{ width: `${s.percent}%` }"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="decadeBreakdown.length" class="stat-card">
+                    <RiHistoryLine class="stat-card__icon" />
+                    <span class="stat-card__label stat-card__label--heading"
+                        >Releases by decade</span
+                    >
+                    <div class="stat-card__bars">
+                        <div
+                            v-for="d in decadeBreakdown"
+                            :key="d.label"
+                            class="bar"
+                        >
+                            <span class="bar__label"
+                                >{{ d.label }} ({{ d.count }})</span
+                            >
+                            <div class="bar__track">
+                                <div
+                                    class="bar__fill"
+                                    :style="{ width: `${d.percent}%` }"
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div v-if="formatBreakdown.length" class="stat-card">
@@ -295,9 +393,8 @@ const formatDate = (value) =>
 }
 
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.25rem;
+    columns: 4 220px;
+    column-gap: 1.25rem;
 }
 
 .stat-card {
@@ -308,6 +405,8 @@ const formatDate = (value) =>
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    break-inside: avoid;
+    margin-bottom: 1.25rem;
 
     &--pending {
         border-style: dashed;
