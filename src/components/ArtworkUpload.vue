@@ -20,7 +20,7 @@ const QUALITY = 0.82;
 const computeHash = async (blob) => {
     if (!crypto?.subtle) {
         console.warn(
-            "[ArtworkUpload] crypto.subtle unavailable — hash deduplication disabled.",
+            "[ArtworkUpload] crypto.subtle unavailable; hash deduplication disabled.",
         );
         return null;
     }

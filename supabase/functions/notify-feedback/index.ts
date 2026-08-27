@@ -29,7 +29,7 @@ serve(async (req) => {
     body: JSON.stringify({
       from: "MediaCrate <notifications@mediacrate.gabriellaroche.dev>",
       to: "gabriel.laroche@protonmail.com",
-      subject: `New ${record.type === "bug" ? "Bug Report" : "Feature Request"} — MediaCrate`,
+      subject: `New ${record.type === "bug" ? "Bug Report" : "Feature Request"} - MediaCrate`,
       html: `
         <h2>New ${record.type === "bug" ? "Bug Report" : "Feature Request"}</h2>
         <p><strong>From:</strong> ${displayName} (${email})</p>

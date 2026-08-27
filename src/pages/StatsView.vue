@@ -350,9 +350,8 @@ const formatDate = (value) =>
                     <RiPriceTag3Line class="stat-card__icon" />
                     <span class="stat-card__value">Coming soon</span>
                     <span class="stat-card__label"
-                        >Most common genre — needs genre data we don't
-                        collect yet</span
-                    >
+                        >Most common genre
+                    </span>
                 </div>
 
                 <!--
@@ -368,8 +367,7 @@ const formatDate = (value) =>
                     <RiTimeLine class="stat-card__icon" />
                     <span class="stat-card__value">Coming soon</span>
                     <span class="stat-card__label"
-                        >Total & average album length — needs track
-                        duration data we don't collect yet</span
+                        >Total & average album length</span
                     >
                 </div>
             </div>

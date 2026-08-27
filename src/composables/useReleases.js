@@ -47,6 +47,7 @@ export function useReleases() {
 
   const fetchOne = async (id) => {
     const { user } = useAuth();
+    if (!user.value) return null;
     const { data } = await supabase
       .from("collections")
       .select("*, release:releases(*, artwork:artworks(*))")

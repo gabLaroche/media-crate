@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const MIME_SIGNATURES: Record<string, number[]> = {
   "image/jpeg": [0xff, 0xd8, 0xff],
   "image/png": [0x89, 0x50, 0x4e, 0x47],
-  "image/webp": [0x52, 0x49, 0x46, 0x46], // "RIFF" — bytes 8-11 must also be "WEBP"
+  "image/webp": [0x52, 0x49, 0x46, 0x46], // "RIFF" - bytes 8-11 must also be "WEBP"
 };
 
 const EXT_MAP: Record<string, string> = {
@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
 
   const { data: { publicUrl } } = admin.storage.from("artworks").getPublicUrl(filePath);
 
-  // Insert artwork row — DB trigger auto-increments profiles.used_bytes
+  // Insert artwork row; DB trigger auto-increments profiles.used_bytes
   const { data: artwork, error: artworkErr } = await admin
     .from("artworks")
     .insert({

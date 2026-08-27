@@ -211,7 +211,7 @@ const handleSubmit = async () => {
     isSubmitting.value = true;
     try {
         if (release) {
-            // Edit mode — only patch collection fields
+            // Edit mode: only patch collection fields
             let sourceId = row.value.source_id;
             if (!sourceId && row.value.source_name?.trim()) {
                 sourceId = await getOrCreateSource(row.value.source_name);

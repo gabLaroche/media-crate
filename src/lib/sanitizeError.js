@@ -23,7 +23,7 @@ const BY_MESSAGE = [
   ["invalid login credentials", "Invalid email or password."],
   ["already registered", "An account with this email already exists."],
   ["email not confirmed", "Please confirm your email address before signing in."],
-  ["storage quota exceeded", null], // keep the original — it's already user-friendly
+  ["storage quota exceeded", null], // keep the original, it's already user-friendly
 ];
 
 export function sanitizeError(error) {

@@ -1,16 +1,12 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 import { useReleases } from "@/composables/useReleases";
 import ReleaseCard from "@/components/ReleaseCard.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 
-const { fetchRandomRelease, updateRecencyWindow } = useReleases();
+const { fetchRandomRelease } = useReleases();
 const current = ref(null);
 const isFetching = ref(false);
-
-onMounted(async () => {
-    await updateRecencyWindow();
-});
 
 const pick = async () => {
     isFetching.value = true;

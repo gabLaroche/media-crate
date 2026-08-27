@@ -29,8 +29,13 @@ export function useAuth() {
   };
 
   const init = async () => {
-    const { data } = await supabase.auth.getSession();
-    await setUser(data.session?.user ?? null);
+    try {
+      const { data } = await supabase.auth.getSession();
+      await setUser(data.session?.user ?? null);
+    } catch {
+      // Lock contention or storage error; onAuthStateChange will set the
+      // user once the session is available.
+    }
 
     supabase.auth.onAuthStateChange(async (_, session) => {
       await setUser(session?.user ?? null);
@@ -68,7 +73,7 @@ export function useAuth() {
   const updateProfile = async ({ display_name, is_public }) => {
     if (!user.value) return { error: "Not authenticated" };
 
-    // Capture the ID immediately — before any async calls that
+    // Capture the ID immediately, before any async calls that
     // might trigger onAuthStateChange and reassign user.value
     const userId = user.value.id;
 

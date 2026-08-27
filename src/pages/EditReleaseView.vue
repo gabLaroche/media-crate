@@ -14,14 +14,16 @@ const router = useRouter();
 const release = ref(null);
 
 const fetchRelease = async () => {
-    const item = await fetchOne(props.id);
-
-    if (!item) {
-        window.history.back();
-        return;
+    try {
+        const item = await fetchOne(props.id);
+        if (!item) {
+            router.push({ name: "collection" });
+            return;
+        }
+        release.value = item;
+    } catch {
+        router.push({ name: "collection" });
     }
-
-    release.value = item;
 };
 
 onMounted(fetchRelease);

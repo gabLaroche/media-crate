@@ -6,7 +6,7 @@ const props = defineProps({
     modelValue: [String, Number], // bound source_id
 });
 
-const emit = defineEmits(["update:modelValue", "update:typed"]);
+const emit = defineEmits(["change"]);
 
 const { sources, fetchSources } = useSources();
 const search = ref("");
@@ -37,31 +37,32 @@ const filteredSources = computed(() => {
 const selectExisting = (s) => {
     selectedExisting.value = s;
     search.value = s.name;
-    emit("update:modelValue", s.id);
+    emit("change", { id: s.id, name: s.name });
     isOpen.value = false;
 };
 
-// Watch for v-model changes to pre-fill (edit form)
+// Watch for v-model changes to pre-fill (edit form).
+// Also watches sources so the field populates once the async fetch completes.
 watch(
-    () => props.modelValue,
-    (val) => {
-        if (val) {
-            const existing = sources.value.find((s) => s.id === val);
-            if (existing) {
-                selectedExisting.value = existing;
-                search.value = existing.name;
-            }
+    [() => props.modelValue, sources],
+    ([val]) => {
+        if (!val || selectedExisting.value || search.value) return;
+        const existing = sources.value.find((s) => s.id === val);
+        if (existing) {
+            selectedExisting.value = existing;
+            search.value = existing.name;
         }
     },
     { immediate: true },
 );
 
-// Expose the typed value for creation-on-submit
+// Emit a single combined event so the parent can update source_id and
+// source_name atomically; two separate emits cause the second to spread
+// stale props and overwrite the first update.
 watch(search, (val) => {
     if (!selectedExisting.value || selectedExisting.value.name !== val) {
         selectedExisting.value = null;
-        emit("update:modelValue", null); // no existing id selected
-        emit("update:typed", val); // this will be used to create new source
+        emit("change", { id: null, name: val });
     }
 });
 </script>

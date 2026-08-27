@@ -104,9 +104,7 @@ const update = (field, value) => {
 
                 <SourceSelect
                     :modelValue="row.source_id"
-                    :typed="row.source_name"
-                    @update:modelValue="update('source_id', $event)"
-                    @update:typed="update('source_name', $event)"
+                    @change="emit('update:row', { ...row, source_id: $event.id, source_name: $event.name })"
                 />
             </div>
 

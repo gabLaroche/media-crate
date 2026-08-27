@@ -277,7 +277,7 @@ onMounted(() => {
             <h2>Devices</h2>
             <p class="section__description">
                 Generate a token to authenticate a MediaCrate randomizer. Each
-                token is shown once — save it somewhere safe.
+                token is shown once, so save it somewhere safe.
             </p>
 
             <div class="field">
@@ -303,7 +303,7 @@ onMounted(() => {
             <!-- New token display -->
             <div v-if="newToken" class="token-reveal">
                 <p class="token-reveal__warning">
-                    ⚠ Copy this token now — it won't be shown again.
+                    ⚠ Copy this token now. It won't be shown again.
                 </p>
                 <div class="token-reveal__value">
                     <code>{{ newToken }}</code>

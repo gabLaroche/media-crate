@@ -19,6 +19,7 @@ interface ReleaseInput {
     notes?: string;
     source_id?: string;
     media_type?: string;
+    exclude_from_randomizer?: boolean;
 }
 
 interface BulkAddPayload {
@@ -156,6 +157,7 @@ Deno.serve(async (req: Request) => {
                     source_id: item.source_id ?? null,
                     media_type: item.media_type ?? null,
                     acquired_date: item.acquired_date ?? null,
+                    exclude_from_randomizer: item.exclude_from_randomizer ?? false,
                 })
                 .select("id")
                 .single();

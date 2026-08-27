@@ -24,4 +24,10 @@ async function authAwareFetch(input, init) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   global: { fetch: authAwareFetch },
+  auth: {
+    // Navigator LockManager throws in PWA/service-worker contexts when the
+    // lock is held by another tab. Use a simple pass-through instead; the
+    // risk of concurrent token writes is negligible for a single-user app.
+    lock: async (_name, _acquireTimeout, fn) => fn(),
+  },
 });

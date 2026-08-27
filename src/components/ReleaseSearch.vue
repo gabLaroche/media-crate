@@ -95,6 +95,7 @@ const resetResults = () => {
     hasSearched.value = false;
     currentPage.value = 1;
     totalPages.value = 1;
+    loadingMore.value = false;
     autoFetchCount.value = 0;
     autoFetchExhausted.value = false;
     isAutoFetching.value = false;
@@ -117,36 +118,39 @@ const search = async () => {
     loading.value = true;
     resetResults();
 
-    const [discogsData, localData] = await Promise.allSettled([
-        searchRelease(buildSearchParams(1)),
-        supabase
-            .from("releases")
-            .select("id, title, artist, year, artworks(url)")
-            .is("discogs_master_id", null)
-            .or(`title.ilike.%${query.value}%,artist.ilike.%${query.value}%`),
-    ]);
+    try {
+        const [discogsData, localData] = await Promise.allSettled([
+            searchRelease(buildSearchParams(1)),
+            supabase
+                .from("releases")
+                .select("id, title, artist, year, artworks(url)")
+                .is("discogs_master_id", null)
+                .or(`title.ilike.%${query.value}%,artist.ilike.%${query.value}%`),
+        ]);
 
-    const discogsResults =
-        discogsData.status === "fulfilled"
-            ? (discogsData.value.results || []).map((r) => ({
-                  ...r,
-                  cover_image: sanitizeCoverImage(r.cover_image),
-                  discogs_type: "master",
-              }))
-            : [];
+        const discogsResults =
+            discogsData.status === "fulfilled"
+                ? (discogsData.value.results || []).map((r) => ({
+                      ...r,
+                      cover_image: sanitizeCoverImage(r.cover_image),
+                      discogs_type: "master",
+                  }))
+                : [];
 
-    if (discogsData.status === "fulfilled") {
-        totalPages.value = discogsData.value.pagination?.pages ?? 1;
+        if (discogsData.status === "fulfilled") {
+            totalPages.value = discogsData.value.pagination?.pages ?? 1;
+        }
+
+        const localResults =
+            localData.status === "fulfilled"
+                ? (localData.value.data || []).map(normalizeLocalRelease)
+                : [];
+
+        results.value = [...localResults, ...discogsResults];
+        hasSearched.value = true;
+    } finally {
+        loading.value = false;
     }
-
-    const localResults =
-        localData.status === "fulfilled"
-            ? (localData.value.data || []).map(normalizeLocalRelease)
-            : [];
-
-    results.value = [...localResults, ...discogsResults];
-    loading.value = false;
-    hasSearched.value = true;
 };
 
 const loadMore = async () => {
@@ -393,7 +397,7 @@ defineExpose({ clear });
                 class="results-status"
             >
                 {{
-                    autoFetchExhausted
+                    autoFetchExhausted || !hasMorePages
                         ? "No results found, try adjusting your filters."
                         : "Searching for more results…"
                 }}
