@@ -169,6 +169,14 @@ const router = createRouter({
             title: "Collection stats | MediaCrate",
           },
         },
+        {
+          path: "feedback",
+          name: "feedback",
+          component: () => import("@/pages/FeedbackView.vue"),
+          meta: {
+            title: "Feedback | MediaCrate",
+          },
+        },
       ],
     },
     {
