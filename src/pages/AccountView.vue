@@ -5,9 +5,11 @@ import { RiFileCopyLine } from "@remixicon/vue";
 import { useRouter } from "vue-router";
 import { supabase, handleUnauthorized } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
+import { useReleases } from "@/composables/useReleases";
 import { sanitizeError } from "@/lib/sanitizeError";
 
 const { user, logout, updateProfile } = useAuth();
+const { releases } = useReleases();
 const router = useRouter();
 
 const profileSaving = ref(false);
@@ -59,12 +61,21 @@ const deleteLoading = ref(false);
 const deleteError = ref("");
 const deleteDialogRef = ref(null);
 
+const deleteCatalogConfirmText = ref("");
+const deleteCatalogLoading = ref(false);
+const deleteCatalogError = ref("");
+const deleteCatalogSuccess = ref(false);
+const deleteCatalogDialogRef = ref(null);
+
 const email = computed(() => user.value?.email || "");
 const hasDevicesBeta = computed(
     () => user.value?.app_metadata?.devices_beta === true,
 );
 const deleteConfirmMatch = computed(
     () => deleteConfirmText.value.trim() === email.value,
+);
+const deleteCatalogConfirmMatch = computed(
+    () => deleteCatalogConfirmText.value.trim() === "DELETE",
 );
 
 const saveProfile = async () => {
@@ -129,6 +140,29 @@ const deleteAccount = async () => {
 
     await logout();
     router.push("/login");
+};
+
+const deleteCatalog = async () => {
+    if (!deleteCatalogConfirmMatch.value) return;
+    deleteCatalogLoading.value = true;
+    deleteCatalogError.value = "";
+    deleteCatalogSuccess.value = false;
+
+    const { error } = await supabase
+        .from("collections")
+        .delete()
+        .eq("user_id", user.value.id);
+
+    if (error) {
+        deleteCatalogError.value = sanitizeError(error);
+    } else {
+        releases.value = [];
+        deleteCatalogConfirmText.value = "";
+        deleteCatalogSuccess.value = true;
+        deleteCatalogDialogRef.value?.close();
+    }
+
+    deleteCatalogLoading.value = false;
 };
 
 // --- Devices ---
@@ -341,6 +375,24 @@ onMounted(() => {
         <section class="section section--danger">
             <h2>Danger zone</h2>
             <p>
+                Deleting your catalog removes all items from your collection.
+                Your sources and release metadata are kept, so re-adding
+                albums later won't require looking them up again.
+            </p>
+            <button
+                class="button--delete"
+                command="show-modal"
+                commandfor="delete-catalog-dialog"
+            >
+                Delete catalog
+            </button>
+            <p v-if="deleteCatalogSuccess" class="success">
+                Your catalog has been deleted.
+            </p>
+
+            <hr class="danger-divider" />
+
+            <p>
                 Deleting your account is permanent and cannot be undone. All
                 your collection data will be removed.
             </p>
@@ -353,7 +405,53 @@ onMounted(() => {
             </button>
         </section>
 
-        <!-- Delete confirmation dialog -->
+        <!-- Delete catalog confirmation dialog -->
+        <dialog
+            id="delete-catalog-dialog"
+            ref="deleteCatalogDialogRef"
+            @click.self="deleteCatalogDialogRef.close()"
+        >
+            <div class="dialog-content" @click.stop>
+                <h3>Delete catalog</h3>
+                <p>
+                    This will permanently delete every item in your
+                    collection. Your account, sources, and release metadata
+                    will be kept. To confirm, type <strong>DELETE</strong>:
+                </p>
+
+                <div class="field">
+                    <input
+                        v-model="deleteCatalogConfirmText"
+                        type="text"
+                        placeholder="DELETE"
+                        autocomplete="off"
+                    />
+                </div>
+
+                <p v-if="deleteCatalogError" class="error">
+                    {{ deleteCatalogError }}
+                </p>
+
+                <div class="dialog-actions">
+                    <button
+                        class="button--delete"
+                        :disabled="!deleteCatalogConfirmMatch || deleteCatalogLoading"
+                        @click="deleteCatalog"
+                    >
+                        {{
+                            deleteCatalogLoading
+                                ? "Deleting…"
+                                : "Yes, delete my catalog"
+                        }}
+                    </button>
+                    <button command="close" commandfor="delete-catalog-dialog">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </dialog>
+
+        <!-- Delete account confirmation dialog -->
         <dialog
             id="delete-account-dialog"
             ref="deleteDialogRef"
@@ -457,6 +555,12 @@ onMounted(() => {
     color: $danger;
     font-size: 0.875rem;
     margin-bottom: 1.2rem;
+}
+
+.danger-divider {
+    border: 0;
+    border-top: 1px solid rgba($danger, 0.2);
+    margin: 2rem 0;
 }
 
 .success {
