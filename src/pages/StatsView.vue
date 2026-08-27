@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import {
     RiDiscLine,
     RiCalendarLine,
@@ -14,6 +14,7 @@ import {
 } from "@remixicon/vue";
 import { useReleases } from "@/composables/useReleases";
 import { useSources } from "@/composables/useSources";
+import { formatDuration } from "@/lib/formatDuration";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import Tooltip from "@/components/Tooltip.vue";
 
@@ -188,12 +189,6 @@ const averageDurationSeconds = computed(() =>
         : null,
 );
 
-const formatDuration = (totalSeconds) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.round((totalSeconds % 3600) / 60);
-    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-};
-
 const firstAcquiredDate = computed(() => {
     const dates = releases.value.map((r) => r.acquired_date).filter(Boolean);
     if (!dates.length) return null;
@@ -206,6 +201,139 @@ const formatDate = (value) =>
         month: "long",
         day: "numeric",
     });
+
+// --- Acquisitions calendar (GitHub-style contribution graph) ---
+
+const utcDateKey = (date) => date.toISOString().slice(0, 10);
+
+// Most recent year first, so the toggle defaults to the latest year with data.
+const acquisitionYears = computed(() => {
+    const years = new Set();
+    for (const r of releases.value) {
+        if (!r.acquired_date) continue;
+        years.add(new Date(r.acquired_date).getUTCFullYear());
+    }
+    return [...years].sort((a, b) => b - a);
+});
+
+const selectedYear = ref(null);
+
+watch(
+    acquisitionYears,
+    (years) => {
+        if (years.length && !years.includes(selectedYear.value)) {
+            selectedYear.value = years[0];
+        }
+    },
+    { immediate: true },
+);
+
+const acquisitionCalendar = computed(() => {
+    if (!selectedYear.value) return { weeks: [], monthLabels: [] };
+    const year = selectedYear.value;
+
+    const counts = new Map();
+    for (const r of releases.value) {
+        if (!r.acquired_date) continue;
+        const date = new Date(r.acquired_date);
+        if (date.getUTCFullYear() !== year) continue;
+        const key = utcDateKey(date);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+
+    const now = new Date();
+    const today = new Date(
+        Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
+    );
+
+    // Pad out to full Sun-Sat weeks so every column has 7 rows; padding
+    // days (outside the year, or after today) are rendered but hidden.
+    const start = new Date(Date.UTC(year, 0, 1));
+    start.setUTCDate(start.getUTCDate() - start.getUTCDay());
+    const end = new Date(Date.UTC(year, 11, 31));
+    end.setUTCDate(end.getUTCDate() + (6 - end.getUTCDay()));
+
+    const days = [];
+    for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+        const key = utcDateKey(d);
+        const inYear = d.getUTCFullYear() === year;
+        days.push({
+            date: new Date(d),
+            key,
+            count: inYear ? (counts.get(key) ?? 0) : 0,
+            hidden: !inYear || d > today,
+        });
+    }
+
+    const maxCount = Math.max(0, ...days.map((d) => d.count));
+
+    const levelFor = (count) => {
+        if (count === 0 || !maxCount) return 0;
+        const ratio = count / maxCount;
+        if (ratio <= 0.25) return 1;
+        if (ratio <= 0.5) return 2;
+        if (ratio <= 0.75) return 3;
+        return 4;
+    };
+
+    const weeks = [];
+    for (let i = 0; i < days.length; i += 7) {
+        weeks.push(
+            days
+                .slice(i, i + 7)
+                .map((d) => ({ ...d, level: levelFor(d.count) })),
+        );
+    }
+
+    // Label only the week containing the 1st of a month, so each month
+    // gets exactly one label instead of every week near the start of one.
+    const monthLabels = weeks.map((week) => {
+        const firstOfMonth = week.find(
+            (d) => !d.hidden && d.date.getUTCDate() === 1,
+        );
+        return firstOfMonth
+            ? firstOfMonth.date.toLocaleDateString("en-US", {
+                  month: "short",
+                  timeZone: "UTC",
+              })
+            : "";
+    });
+
+    return { weeks, monthLabels };
+});
+
+const formatDayTooltip = (day) => {
+    const label = day.date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+    });
+    return `${day.count} acquired on ${label}`;
+};
+
+// Lets desktop users click-and-drag the calendar horizontally, since it
+// has no scrollbar-visible affordance otherwise. Touch keeps native scroll.
+const isDraggingCalendar = ref(false);
+let dragStartX = 0;
+let dragStartScrollLeft = 0;
+
+const startCalendarDrag = (e) => {
+    if (e.pointerType === "touch") return;
+    isDraggingCalendar.value = true;
+    dragStartX = e.clientX;
+    dragStartScrollLeft = e.currentTarget.scrollLeft;
+    e.currentTarget.setPointerCapture(e.pointerId);
+};
+
+const dragCalendar = (e) => {
+    if (!isDraggingCalendar.value) return;
+    e.currentTarget.scrollLeft = dragStartScrollLeft - (e.clientX - dragStartX);
+};
+
+const endCalendarDrag = () => {
+    isDraggingCalendar.value = false;
+};
 </script>
 
 <template>
@@ -221,6 +349,94 @@ const formatDate = (value) =>
 
         <template v-else>
             <div class="stats-grid">
+                <div v-if="acquisitionYears.length" class="stat-card">
+                    <div class="calendar__header">
+                        <div class="calendar__title">
+                            <RiCalendarLine class="stat-card__icon" />
+                            <span
+                                class="stat-card__label stat-card__label--heading"
+                                >Acquisitions</span
+                            >
+                        </div>
+
+                        <div
+                            v-if="acquisitionYears.length > 1"
+                            class="calendar__years"
+                        >
+                            <button
+                                v-for="year in acquisitionYears"
+                                :key="year"
+                                type="button"
+                                class="calendar__year-btn"
+                                :class="{
+                                    'calendar__year-btn--active':
+                                        year === selectedYear,
+                                }"
+                                @click="selectedYear = year"
+                            >
+                                {{ year }}
+                            </button>
+                        </div>
+                        <span v-else class="calendar__year-label">{{
+                            selectedYear
+                        }}</span>
+                    </div>
+
+                    <div class="calendar">
+                        <div
+                            class="calendar__scroll"
+                            :class="{
+                                'calendar__scroll--dragging':
+                                    isDraggingCalendar,
+                            }"
+                            @pointerdown="startCalendarDrag"
+                            @pointermove="dragCalendar"
+                            @pointerup="endCalendarDrag"
+                            @pointercancel="endCalendarDrag"
+                        >
+                            <div class="calendar__months">
+                                <span
+                                    v-for="(label, i) in acquisitionCalendar.monthLabels"
+                                    :key="i"
+                                    class="calendar__month"
+                                    >{{ label }}</span
+                                >
+                            </div>
+                            <div class="calendar__grid">
+                                <div
+                                    v-for="day in acquisitionCalendar.weeks.flat()"
+                                    :key="day.key"
+                                    class="calendar__day"
+                                    :class="[
+                                        `calendar__day--level-${day.level}`,
+                                        { 'calendar__day--hidden': day.hidden },
+                                    ]"
+                                    :title="
+                                        day.hidden ? '' : formatDayTooltip(day)
+                                    "
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar__legend">
+                        <span>Less</span>
+                        <span
+                            v-for="level in [0, 1, 2, 3, 4]"
+                            :key="level"
+                            class="calendar__day"
+                            :class="`calendar__day--level-${level}`"
+                        />
+                        <span>More</span>
+                    </div>
+                </div>
+                <div v-else class="stat-card stat-card--pending">
+                    <RiCalendarLine class="stat-card__icon" />
+                    <span class="stat-card__value">Coming soon</span>
+                    <span class="stat-card__label"
+                        >Acquisitions calendar</span
+                    >
+                </div>
+
                 <div class="stat-card">
                     <RiDiscLine class="stat-card__icon" />
                     <span class="stat-card__value">{{ totalReleases }}</span>
@@ -464,6 +680,10 @@ const formatDate = (value) =>
 .stats-grid {
     columns: 4 220px;
     column-gap: 1.25rem;
+    // A card taller than the column-balancing algorithm expects can make
+    // the browser render a phantom extra column past the 4 specified,
+    // widening the page itself even though every card's own content fits.
+    overflow-x: hidden;
 }
 
 .stat-card {
@@ -480,6 +700,140 @@ const formatDate = (value) =>
     &--pending {
         border-style: dashed;
         opacity: 0.75;
+    }
+}
+
+.calendar {
+    $cell: 8px;
+    $gap: 2px;
+
+    // Flex items default to a min-width equal to their content's intrinsic
+    // width, which would let the (much wider) grid push this card - and the
+    // page - wider instead of scrolling internally.
+    min-width: 0;
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+    }
+
+    &__title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .stat-card__icon {
+            margin-bottom: 0;
+        }
+    }
+
+    &__years {
+        display: flex;
+        flex-wrap: wrap;
+        min-width: 0;
+        gap: 0.3rem;
+    }
+
+    &__year-btn {
+        background: none;
+        border: 1px solid $border;
+        color: $text-muted;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.75rem;
+        border-radius: 999px;
+
+        &:hover {
+            background-color: rgba($primary, 0.1);
+            color: $text;
+        }
+
+        &--active {
+            background-color: $primary;
+            border-color: $primary;
+            color: $neutral-white;
+        }
+    }
+
+    &__year-label {
+        font-size: 0.75rem;
+        color: $text-muted;
+    }
+
+    &__scroll {
+        width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        cursor: grab;
+        user-select: none;
+
+        &--dragging {
+            cursor: grabbing;
+        }
+    }
+
+    &__months {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: $cell;
+        gap: $gap;
+        margin-bottom: 0.25rem;
+        width: max-content;
+    }
+
+    &__month {
+        font-size: 0.65rem;
+        color: $text-muted;
+        white-space: nowrap;
+    }
+
+    &__grid {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: $cell;
+        grid-template-rows: repeat(7, $cell);
+        gap: $gap;
+        width: max-content;
+    }
+
+    &__legend {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        color: $text-muted;
+    }
+
+    &__day {
+        width: $cell;
+        height: $cell;
+        border-radius: 2px;
+        background-color: rgba($border, 0.6);
+
+        &--level-1 {
+            background-color: rgba($primary, 0.25);
+        }
+
+        &--level-2 {
+            background-color: rgba($primary, 0.5);
+        }
+
+        &--level-3 {
+            background-color: rgba($primary, 0.75);
+        }
+
+        &--level-4 {
+            background-color: $primary;
+        }
+
+        &--hidden {
+            visibility: hidden;
+        }
     }
 }
 
