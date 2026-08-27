@@ -21,6 +21,9 @@ export function useReleases() {
     release_date: item.release?.year,
     discogs_master_id: item.release?.discogs_master_id,
     discogs_type: item.release?.discogs_type,
+    genres: item.release?.genres ?? [],
+    styles: item.release?.styles ?? [],
+    duration_seconds: item.release?.duration_seconds ?? null,
     artwork_url: item.release?.artwork?.url ?? null,
     artwork_file_path: item.release?.artwork?.file_path ?? null,
   });

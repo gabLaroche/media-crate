@@ -38,6 +38,8 @@ function normalizeMaster(master: any) {
     year: master.year || null,
     cover_image: master.images?.[0]?.uri ?? null,
     country: null,
+    genres: master.genres ?? [],
+    styles: master.styles ?? [],
   };
 }
 
@@ -49,6 +51,8 @@ function normalizeRelease(release: any) {
     year: release.year || null,
     cover_image: release.images?.[0]?.uri ?? null,
     country: release.country || null,
+    genres: release.genres ?? [],
+    styles: release.styles ?? [],
   };
 }
 

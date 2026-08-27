@@ -10,10 +10,12 @@ import {
     RiTimeLine,
     RiPriceTag3Line,
     RiHistoryLine,
+    RiInformationLine,
 } from "@remixicon/vue";
 import { useReleases } from "@/composables/useReleases";
 import { useSources } from "@/composables/useSources";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
+import Tooltip from "@/components/Tooltip.vue";
 
 const { releases, fetchAll } = useReleases();
 const { sources, fetchSources } = useSources();
@@ -153,6 +155,44 @@ const conditionBreakdown = computed(() => {
     }
     return breakdown(counts);
 });
+
+const genreBreakdown = computed(() => {
+    const counts = new Map();
+    for (const r of releases.value) {
+        for (const genre of r.genres ?? []) {
+            counts.set(genre, (counts.get(genre) ?? 0) + 1);
+        }
+    }
+    const entries = [...counts.entries()]
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, TOP_N);
+    return relativeToMax(entries);
+});
+
+const releasesWithDuration = computed(() =>
+    releases.value.filter(
+        (r) => Number.isFinite(r.duration_seconds) && r.duration_seconds > 0,
+    ),
+);
+
+const totalDurationSeconds = computed(() =>
+    releasesWithDuration.value.reduce((sum, r) => sum + r.duration_seconds, 0),
+);
+
+const averageDurationSeconds = computed(() =>
+    releasesWithDuration.value.length
+        ? Math.round(
+              totalDurationSeconds.value / releasesWithDuration.value.length,
+          )
+        : null,
+);
+
+const formatDuration = (totalSeconds) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.round((totalSeconds % 3600) / 60);
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+};
 
 const firstAcquiredDate = computed(() => {
     const dates = releases.value.map((r) => r.acquired_date).filter(Boolean);
@@ -339,14 +379,37 @@ const formatDate = (value) =>
                     </div>
                 </div>
 
-                <!--
-                    TODO: Most common genre requires capturing genre/style
-                    data from Discogs at add-time (not currently stored on
-                    releases) plus a migration to add the column(s), and
-                    wouldn't apply retroactively to existing releases
-                    without a backfill.
-                -->
-                <div class="stat-card stat-card--pending">
+                <div v-if="genreBreakdown.length" class="stat-card">
+                    <RiPriceTag3Line class="stat-card__icon" />
+                    <span
+                        class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
+                    >
+                        Top genres
+                        <Tooltip
+                            text="Genre tags come from Discogs and are approximate - they may not match every release exactly."
+                        >
+                            <RiInformationLine class="stat-card__info-icon" />
+                        </Tooltip>
+                    </span>
+                    <div class="stat-card__bars">
+                        <div
+                            v-for="g in genreBreakdown"
+                            :key="g.label"
+                            class="bar"
+                        >
+                            <span class="bar__label"
+                                >{{ g.label }} ({{ g.count }})</span
+                            >
+                            <div class="bar__track">
+                                <div
+                                    class="bar__fill"
+                                    :style="{ width: `${g.percent}%` }"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-else class="stat-card stat-card--pending">
                     <RiPriceTag3Line class="stat-card__icon" />
                     <span class="stat-card__value">Coming soon</span>
                     <span class="stat-card__label"
@@ -354,16 +417,24 @@ const formatDate = (value) =>
                     </span>
                 </div>
 
-                <!--
-                    TODO: Total/average album length requires track
-                    duration data, which only exists on Discogs *release*
-                    objects (not the *master* objects our add flow
-                    resolves to) - would need an extra Discogs API call
-                    per add (master's main_release -> that release's
-                    tracklist), a migration to store it, and again
-                    wouldn't apply retroactively without a backfill.
-                -->
-                <div class="stat-card stat-card--pending">
+                <div v-if="averageDurationSeconds" class="stat-card">
+                    <RiTimeLine class="stat-card__icon" />
+                    <span class="stat-card__value"
+                        >{{ formatDuration(totalDurationSeconds) }}</span
+                    >
+                    <span
+                        class="stat-card__label stat-card__label--with-tooltip"
+                    >
+                        Total collection length (avg
+                        {{ formatDuration(averageDurationSeconds) }}/release)
+                        <Tooltip
+                            text="Track durations come from Discogs and are approximate - they may not match your physical copies exactly."
+                        >
+                            <RiInformationLine class="stat-card__info-icon" />
+                        </Tooltip>
+                    </span>
+                </div>
+                <div v-else class="stat-card stat-card--pending">
                     <RiTimeLine class="stat-card__icon" />
                     <span class="stat-card__value">Coming soon</span>
                     <span class="stat-card__label"
@@ -436,6 +507,20 @@ const formatDate = (value) =>
         letter-spacing: 0.04em;
         color: $text-muted;
     }
+
+    &--with-tooltip {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+}
+
+.stat-card__info-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: $text-muted;
 }
 
 .stat-card__bars {

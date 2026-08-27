@@ -45,6 +45,8 @@ const normalizeLocalRelease = (r) => ({
     country: null,
     discogs_master_id: null,
     discogs_type: null,
+    genres: [],
+    styles: [],
 });
 
 const availableCountries = computed(() => {
@@ -134,6 +136,8 @@ const search = async () => {
                       ...r,
                       cover_image: sanitizeCoverImage(r.cover_image),
                       discogs_type: "master",
+                      genres: r.genre ?? [],
+                      styles: r.style ?? [],
                   }))
                 : [];
 
@@ -163,6 +167,9 @@ const loadMore = async () => {
         const newResults = (data.results || []).map((r) => ({
             ...r,
             cover_image: sanitizeCoverImage(r.cover_image),
+            discogs_type: "master",
+            genres: r.genre ?? [],
+            styles: r.style ?? [],
         }));
         results.value = [...results.value, ...dedupeResults(newResults)];
     } finally {

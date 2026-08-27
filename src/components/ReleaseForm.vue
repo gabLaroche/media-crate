@@ -59,6 +59,8 @@ const newRow = () => ({
     artwork_file: null,
     artwork_hash: null,
     notes: "",
+    genres: [],
+    styles: [],
 });
 
 // --- Single / edit mode row ---
@@ -119,6 +121,8 @@ const autofill = (result) => {
         discogs_type: result._source === "local" ? null : result.discogs_type,
         artwork_file: null,
         artwork_hash: null,
+        genres: result._source === "local" ? [] : (result.genres ?? []),
+        styles: result._source === "local" ? [] : (result.styles ?? []),
     };
 };
 
@@ -141,6 +145,8 @@ const onDiscogsSelected = (result) => {
         album_name: albumName,
         release_date: result.year ? String(result.year) : "",
         artwork_url: result.cover_image || "",
+        genres: result._source === "local" ? [] : (result.genres ?? []),
+        styles: result._source === "local" ? [] : (result.styles ?? []),
     });
 };
 
@@ -203,6 +209,8 @@ const resolveRow = async (r) => {
         source_id: sourceId || undefined,
         media_type: r.media_type,
         exclude_from_randomizer: r.exclude_from_randomizer ?? false,
+        genres: r.genres?.length ? r.genres : undefined,
+        styles: r.styles?.length ? r.styles : undefined,
     };
 };
 

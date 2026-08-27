@@ -20,10 +20,59 @@ interface ReleaseInput {
     source_id?: string;
     media_type?: string;
     exclude_from_randomizer?: boolean;
+    genres?: string[];
+    styles?: string[];
 }
 
 interface BulkAddPayload {
     releases: ReleaseInput[];
+}
+
+async function fetchDiscogs(path: string, token: string) {
+    const res = await fetch(`https://api.discogs.com${path}`, {
+        headers: {
+            Authorization: `Discogs token=${token}`,
+            "User-Agent": "CDCollectionApp/1.0",
+        },
+    });
+    if (!res.ok) return null;
+    return res.json();
+}
+
+// "mm:ss" or "h:mm:ss" -> seconds; blank/malformed tracks (indexes, headings) contribute 0.
+function parseDuration(duration: string | undefined) {
+    if (!duration) return 0;
+    const parts = duration.split(":").map(Number);
+    if (parts.some((p) => Number.isNaN(p))) return 0;
+    return parts.reduce((acc, p) => acc * 60 + p, 0);
+}
+
+// Master objects carry genres/styles but not a tracklist - only a *release*
+// does, and a master's own id isn't a release id. Resolve via main_release.
+async function fetchDurationSeconds(
+    discogsMasterId: number,
+    discogsType: string | undefined,
+    token: string,
+) {
+    try {
+        let releaseId = discogsMasterId;
+        if (discogsType !== "release") {
+            const master = await fetchDiscogs(`/masters/${discogsMasterId}`, token);
+            if (!master?.main_release) return null;
+            releaseId = master.main_release;
+        }
+
+        const release = await fetchDiscogs(`/releases/${releaseId}`, token);
+        if (!Array.isArray(release?.tracklist)) return null;
+
+        const seconds = release.tracklist.reduce(
+            (sum: number, t: { duration?: string }) => sum + parseDuration(t.duration),
+            0,
+        );
+        return seconds > 0 ? seconds : null;
+    } catch {
+        return null;
+    }
 }
 
 Deno.serve(async (req: Request) => {
@@ -114,6 +163,18 @@ Deno.serve(async (req: Request) => {
                     artworkId = artworkRow.id;
                 }
 
+                let durationSeconds: number | null = null;
+                if (item.discogs_master_id) {
+                    const discogsToken = Deno.env.get("DISCOGS_TOKEN");
+                    if (discogsToken) {
+                        durationSeconds = await fetchDurationSeconds(
+                            item.discogs_master_id,
+                            item.discogs_type,
+                            discogsToken,
+                        );
+                    }
+                }
+
                 const { data: newRelease, error: releaseErr } = await supabase
                     .from("releases")
                     .insert({
@@ -123,6 +184,9 @@ Deno.serve(async (req: Request) => {
                         discogs_master_id: item.discogs_master_id ?? null,
                         discogs_type: item.discogs_type ?? null,
                         artwork_id: artworkId,
+                        genres: item.genres?.length ? item.genres : null,
+                        styles: item.styles?.length ? item.styles : null,
+                        duration_seconds: durationSeconds,
                     })
                     .select("id")
                     .single();
