@@ -47,31 +47,50 @@ function parseDuration(duration: string | undefined) {
     return parts.reduce((acc, p) => acc * 60 + p, 0);
 }
 
+interface Track {
+    position: string;
+    title: string;
+    duration_seconds: number | null;
+}
+
 // Master objects carry genres/styles but not a tracklist - only a *release*
 // does, and a master's own id isn't a release id. Resolve via main_release.
-async function fetchDurationSeconds(
+async function fetchTrackData(
     discogsMasterId: number,
     discogsType: string | undefined,
     token: string,
-) {
+): Promise<{ durationSeconds: number | null; tracklist: Track[] | null }> {
+    const empty = { durationSeconds: null, tracklist: null };
     try {
         let releaseId = discogsMasterId;
         if (discogsType !== "release") {
             const master = await fetchDiscogs(`/masters/${discogsMasterId}`, token);
-            if (!master?.main_release) return null;
+            if (!master?.main_release) return empty;
             releaseId = master.main_release;
         }
 
         const release = await fetchDiscogs(`/releases/${releaseId}`, token);
-        if (!Array.isArray(release?.tracklist)) return null;
+        if (!Array.isArray(release?.tracklist)) return empty;
 
-        const seconds = release.tracklist.reduce(
-            (sum: number, t: { duration?: string }) => sum + parseDuration(t.duration),
+        const tracklist: Track[] = release.tracklist.map(
+            (t: { position?: string; title?: string; duration?: string }) => ({
+                position: t.position ?? "",
+                title: t.title ?? "",
+                duration_seconds: t.duration ? parseDuration(t.duration) || null : null,
+            }),
+        );
+
+        const seconds = tracklist.reduce(
+            (sum, t) => sum + (t.duration_seconds ?? 0),
             0,
         );
-        return seconds > 0 ? seconds : null;
+
+        return {
+            durationSeconds: seconds > 0 ? seconds : null,
+            tracklist: tracklist.length ? tracklist : null,
+        };
     } catch {
-        return null;
+        return empty;
     }
 }
 
@@ -164,14 +183,17 @@ Deno.serve(async (req: Request) => {
                 }
 
                 let durationSeconds: number | null = null;
+                let tracklist: Track[] | null = null;
                 if (item.discogs_master_id) {
                     const discogsToken = Deno.env.get("DISCOGS_TOKEN");
                     if (discogsToken) {
-                        durationSeconds = await fetchDurationSeconds(
+                        const trackData = await fetchTrackData(
                             item.discogs_master_id,
                             item.discogs_type,
                             discogsToken,
                         );
+                        durationSeconds = trackData.durationSeconds;
+                        tracklist = trackData.tracklist;
                     }
                 }
 
@@ -187,6 +209,7 @@ Deno.serve(async (req: Request) => {
                         genres: item.genres?.length ? item.genres : null,
                         styles: item.styles?.length ? item.styles : null,
                         duration_seconds: durationSeconds,
+                        tracklist: tracklist,
                     })
                     .select("id")
                     .single();

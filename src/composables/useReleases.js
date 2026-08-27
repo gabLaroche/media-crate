@@ -24,6 +24,7 @@ export function useReleases() {
     genres: item.release?.genres ?? [],
     styles: item.release?.styles ?? [],
     duration_seconds: item.release?.duration_seconds ?? null,
+    tracklist: item.release?.tracklist ?? [],
     artwork_url: item.release?.artwork?.url ?? null,
     artwork_file_path: item.release?.artwork?.file_path ?? null,
   });

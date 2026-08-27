@@ -48,9 +48,15 @@ const goToEditPage = () => router.push(`/edit/${release.id}`);
                 <span v-if="release.condition" class="tag">{{
                     release.condition
                 }}</span>
+                <span
+                    v-for="genre in release.genres"
+                    :key="genre"
+                    class="tag"
+                    >{{ genre }}</span
+                >
             </div>
 
-            <div v-if="showButtons" class="action-buttons">
+            <div v-if="showButtons" class="action-buttons" @click.stop>
                 <button class="btn-icon" @click="goToEditPage">
                     <RiPencilLine :width="15" />
                 </button>

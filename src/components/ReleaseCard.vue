@@ -7,9 +7,12 @@ import {
     RiPencilLine,
     RiDeleteBin6Line,
     RiCalendarLine,
+    RiArrowLeftSLine,
+    RiArrowRightSLine,
 } from "@remixicon/vue";
 import { useReleases } from "@/composables/useReleases";
 import ReleaseDetails from "@/components/ReleaseDetails.vue";
+import ReleaseTracklist from "@/components/ReleaseTracklist.vue";
 
 const {
     release,
@@ -21,11 +24,15 @@ const { deleteRelease } = useReleases();
 const emit = defineEmits(["deleted"]);
 const deleteConfirmRef = ref(null);
 const viewDialogRef = ref(null);
+const activePage = ref("info");
 const router = useRouter();
 
 const goToEditPage = () => router.push(`/edit/${release.id}`);
 
-const openViewDialog = () => viewDialogRef.value?.showModal();
+const openViewDialog = () => {
+    activePage.value = "info";
+    viewDialogRef.value?.showModal();
+};
 
 const deleteItem = () => {
     deleteRelease(release.id).then(() => {
@@ -49,8 +56,8 @@ const onViewDialogClick = (e) => {
 
 <template>
     <div
-        :class="['card', `card--${viewMode}`]"
-        @click="viewMode === 'list' && openViewDialog()"
+        :class="['card', `card--${viewMode}`, 'card--clickable']"
+        @click="openViewDialog"
     >
         <div class="card-image-wrap">
             <img
@@ -78,11 +85,7 @@ const onViewDialogClick = (e) => {
                 </div>
 
                 <div class="list-actions" @click.stop>
-                    <button
-                        class="btn-icon"
-                        command="show-modal"
-                        :commandfor="`view-details-${release.id}`"
-                    >
+                    <button class="btn-icon" @click="openViewDialog">
                         <RiEyeLine :width="14" />
                     </button>
                     <template v-if="showButtons">
@@ -140,7 +143,6 @@ const onViewDialogClick = (e) => {
         </dialog>
 
         <dialog
-            v-if="viewMode === 'list'"
             :id="`view-details-${release.id}`"
             ref="viewDialogRef"
             @click.self.stop="onViewDialogClick"
@@ -161,7 +163,39 @@ const onViewDialogClick = (e) => {
                             :alt="release.album_name"
                         />
                     </div>
-                    <ReleaseDetails :release="release" :showButtons="false" />
+
+                    <div class="page-pager">
+                        <button
+                            type="button"
+                            class="pager-btn"
+                            :disabled="activePage === 'info'"
+                            aria-label="Previous page"
+                            @click="activePage = 'info'"
+                        >
+                            <RiArrowLeftSLine :width="18" />
+                        </button>
+                        <span class="pager-label">{{
+                            activePage === "info" ? "Info" : "Tracklist"
+                        }}</span>
+                        <button
+                            type="button"
+                            class="pager-btn"
+                            :disabled="activePage === 'tracklist'"
+                            aria-label="Next page"
+                            @click="activePage = 'tracklist'"
+                        >
+                            <RiArrowRightSLine :width="18" />
+                        </button>
+                    </div>
+
+                    <div class="page-content">
+                        <ReleaseDetails
+                            v-if="activePage === 'info'"
+                            :release="release"
+                            :showButtons="false"
+                        />
+                        <ReleaseTracklist v-else :release="release" />
+                    </div>
                 </div>
             </div>
         </dialog>
@@ -176,11 +210,14 @@ const onViewDialogClick = (e) => {
     border-radius: 10px;
     overflow: hidden;
 
+    &.card--clickable {
+        cursor: pointer;
+    }
+
     &.card--list {
         display: flex;
         flex-direction: row;
         height: 72px;
-        cursor: pointer;
 
         .card-image-wrap {
             height: 100%;
@@ -197,6 +234,7 @@ const onViewDialogClick = (e) => {
 
 .card-image-wrap {
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .card-image {
@@ -294,6 +332,9 @@ dialog {
     border: 0;
     background-color: transparent;
     cursor: default;
+    // Prevent the dialog itself from becoming a second scroll container -
+    // scrolling for oversized content happens inside .page-content instead.
+    overflow: hidden;
 
     &::backdrop {
         background-color: rgba($secondary-muted, 0.5);
@@ -332,8 +373,11 @@ dialog {
     background-color: transparent;
     border: none;
     padding: 2.5rem 0 0;
-    width: min(360px, 92vw);
+    width: min(400px, 92vw);
     max-width: none;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     color: $text;
 
     .close-icon {
@@ -353,5 +397,54 @@ dialog {
 
 .view-dialog-card {
     width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    flex-shrink: 0;
+}
+
+.page-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.pager-label {
+    min-width: 5rem;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.pager-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 6px;
+    background-color: $primary-muted;
+    color: $primary-dark;
+
+    &:hover:not(:disabled) {
+        background-color: $primary-light;
+        color: $neutral-white;
+    }
+
+    &:disabled {
+        background-color: transparent;
+        color: $text-muted;
+        cursor: default;
+    }
 }
 </style>
