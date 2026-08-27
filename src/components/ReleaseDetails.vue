@@ -12,7 +12,11 @@ import {
 } from "@remixicon/vue";
 import { useSources } from "@/composables/useSources";
 
-const { release, showButtons } = defineProps(["release", "showButtons"]);
+const { release, showButtons, showGenres } = defineProps([
+    "release",
+    "showButtons",
+    "showGenres",
+]);
 const { sources } = useSources();
 const router = useRouter();
 
@@ -42,18 +46,20 @@ const goToEditPage = () => router.push(`/edit/${release.id}`);
     <div class="card-body">
         <div class="card-row">
             <div class="tags">
-                <span v-if="release.media_type" class="tag">{{
+                <span v-if="release.media_type" class="tag tag--media">{{
                     release.media_type
                 }}</span>
-                <span v-if="release.condition" class="tag">{{
+                <span v-if="release.condition" class="tag tag--condition">{{
                     release.condition
                 }}</span>
-                <span
-                    v-for="genre in release.genres"
-                    :key="genre"
-                    class="tag"
-                    >{{ genre }}</span
-                >
+                <template v-if="showGenres">
+                    <span
+                        v-for="genre in release.genres"
+                        :key="genre"
+                        class="tag tag--genre"
+                        >{{ genre }}</span
+                    >
+                </template>
             </div>
 
             <div v-if="showButtons" class="action-buttons" @click.stop>
@@ -140,8 +146,21 @@ const goToEditPage = () => router.push(`/edit/${release.id}`);
     font-weight: 600;
     padding: 0.2rem 0.6rem;
     border-radius: 999px;
-    background-color: $primary-muted;
-    color: $primary-darker;
+
+    &--media {
+        background-color: $primary-muted;
+        color: $primary-darker;
+    }
+
+    &--condition {
+        background-color: $secondary-muted;
+        color: $secondary-darker;
+    }
+
+    &--genre {
+        background-color: rgba($success, 0.15);
+        color: $success-dark;
+    }
 }
 
 .action-buttons {

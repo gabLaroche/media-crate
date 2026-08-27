@@ -193,6 +193,7 @@ const onViewDialogClick = (e) => {
                             v-if="activePage === 'info'"
                             :release="release"
                             :showButtons="false"
+                            :showGenres="true"
                         />
                         <ReleaseTracklist v-else :release="release" />
                     </div>
