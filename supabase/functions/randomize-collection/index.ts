@@ -68,6 +68,10 @@ Deno.serve(async (req: Request) => {
           year,
           discogs_master_id,
           discogs_type,
+          genres,
+          styles,
+          duration_seconds,
+          tracklist,
           artworks ( id, url, file_path )
         )
       `)
