@@ -27,7 +27,7 @@ serve(async (req) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "MediaCrate <notifications@mediacrate.gabriellaroche.dev>",
+      from: "MediaCrate <notifications@mediacrate.app>",
       to: "gabriel.laroche@protonmail.com",
       subject: `New ${record.type === "bug" ? "Bug Report" : "Feature Request"} - MediaCrate`,
       html: `
