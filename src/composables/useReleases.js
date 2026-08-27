@@ -256,6 +256,36 @@ export function useReleases() {
     return res.json();
   };
 
+  const relinkDiscogsRelease = async (collectionId, discogsReleaseId) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/relink-release`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          collection_id: collectionId,
+          discogs_release_id: discogsReleaseId,
+        }),
+      },
+    );
+
+    if (res.status === 401) {
+      await handleUnauthorized();
+      throw new Error("Session expired");
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to link release");
+    return data;
+  };
+
   const fetchRandomRelease = async () => {
     const {
       data: { session },
@@ -310,6 +340,7 @@ export function useReleases() {
     addRelease,
     updateRelease,
     deleteRelease,
+    relinkDiscogsRelease,
     fetchRandomRelease,
     sortReleases,
     sortReleasesForUser,

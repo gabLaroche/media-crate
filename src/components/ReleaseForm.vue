@@ -9,14 +9,62 @@ import { cleanTitle } from "@/lib/cleanTitle";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/composables/useAuth";
 
-const { addRelease, updateRelease, bulkAddReleases, uploadArtwork } =
-    useReleases();
+const {
+    addRelease,
+    updateRelease,
+    bulkAddReleases,
+    uploadArtwork,
+    relinkDiscogsRelease,
+} = useReleases();
 const { getOrCreateSource } = useSources();
 const router = useRouter();
 const { user } = useAuth();
 
 const { release, bulk } = defineProps(["release", "bulk"]);
-const emit = defineEmits(["submitted"]);
+const emit = defineEmits(["submitted", "relinked"]);
+
+// --- Link a specific Discogs release (edit mode only) ---
+const discogsReleaseInput = ref("");
+const linkingRelease = ref(false);
+const linkError = ref("");
+const linkSuccess = ref(false);
+
+const needsDiscogsRelease = computed(
+    () =>
+        !!release &&
+        (!release.discogs_master_id || release.discogs_type !== "release"),
+);
+
+const extractDiscogsReleaseId = (input) => {
+    const trimmed = input.trim();
+    const urlMatch = trimmed.match(/release\/(\d+)/);
+    if (urlMatch) return urlMatch[1];
+    return /^\d+$/.test(trimmed) ? trimmed : null;
+};
+
+const linkDiscogsRelease = async () => {
+    linkError.value = "";
+    linkSuccess.value = false;
+
+    const id = extractDiscogsReleaseId(discogsReleaseInput.value);
+    if (!id) {
+        linkError.value =
+            "Enter a numeric Discogs release ID, or paste a discogs.com/release/ URL.";
+        return;
+    }
+
+    linkingRelease.value = true;
+    try {
+        await relinkDiscogsRelease(release.id, id);
+        linkSuccess.value = true;
+        discogsReleaseInput.value = "";
+        emit("relinked");
+    } catch (err) {
+        linkError.value = err.message || "Failed to link release.";
+    } finally {
+        linkingRelease.value = false;
+    }
+};
 
 // --- Quota ---
 const quotaExceeded = ref(false);
@@ -300,6 +348,37 @@ const resetBulkForm = () => {
                     </button>
                 </div>
             </form>
+
+            <div v-if="needsDiscogsRelease" class="discogs-link">
+                <label>Link a specific Discogs release</label>
+                <p class="discogs-link__hint">
+                    This release is only matched to a general Discogs entry.
+                    Paste a specific release ID or URL (e.g.
+                    discogs.com/release/249504) to pull in the exact
+                    tracklist and details for your pressing.
+                </p>
+                <div class="discogs-link__row">
+                    <input
+                        v-model="discogsReleaseInput"
+                        placeholder="e.g. 249504 or a discogs.com/release/ URL"
+                        @keydown.enter.prevent="linkDiscogsRelease"
+                    />
+                    <button
+                        type="button"
+                        class="button button--outline"
+                        :disabled="
+                            !discogsReleaseInput.trim() || linkingRelease
+                        "
+                        @click="linkDiscogsRelease"
+                    >
+                        {{ linkingRelease ? "Linking…" : "Link" }}
+                    </button>
+                </div>
+                <p v-if="linkError" class="error">{{ linkError }}</p>
+                <p v-if="linkSuccess" class="success">
+                    Linked! Tracklist and details updated.
+                </p>
+            </div>
         </template>
 
         <!-- ======= BULK MODE ======= -->
@@ -365,6 +444,52 @@ const resetBulkForm = () => {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+}
+
+.discogs-link {
+    background-color: $primary-muted;
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $primary-darker;
+    }
+
+    &__hint {
+        margin: 0;
+        font-size: 0.85rem;
+        color: $primary-darker;
+    }
+
+    &__row {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+
+        input {
+            flex: 1;
+            min-width: 200px;
+        }
+    }
+}
+
+.error {
+    color: $danger;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.success {
+    color: green;
+    font-size: 0.875rem;
+    margin: 0;
 }
 
 .bulk-rows {

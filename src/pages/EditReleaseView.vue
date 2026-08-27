@@ -36,6 +36,10 @@ const onSubmitted = () => {
 <template>
     <div>
         <h1>Edit Release</h1>
-        <ReleaseForm :release="release" @submitted="onSubmitted" />
+        <ReleaseForm
+            :release="release"
+            @submitted="onSubmitted"
+            @relinked="fetchRelease"
+        />
     </div>
 </template>
