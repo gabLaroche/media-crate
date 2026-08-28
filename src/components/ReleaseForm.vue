@@ -37,8 +37,13 @@ const needsDiscogsRelease = computed(
 
 const extractDiscogsReleaseId = (input) => {
     const trimmed = input.trim();
+
     const urlMatch = trimmed.match(/release\/(\d+)/);
     if (urlMatch) return urlMatch[1];
+
+    const shorthandMatch = trimmed.match(/^\[?r(\d+)\]?$/i);
+    if (shorthandMatch) return shorthandMatch[1];
+
     return /^\d+$/.test(trimmed) ? trimmed : null;
 };
 
