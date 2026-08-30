@@ -354,9 +354,17 @@ const endCalendarDrag = () => {
                         <div class="calendar__title">
                             <RiCalendarLine class="stat-card__icon" />
                             <span
-                                class="stat-card__label stat-card__label--heading"
-                                >Acquisitions</span
+                                class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
                             >
+                                Acquisitions
+                                <Tooltip
+                                    text="Each square is a day. Darker squares mean more releases were added to your collection that day - hover a square for the exact count."
+                                >
+                                    <RiInformationLine
+                                        class="stat-card__info-icon"
+                                    />
+                                </Tooltip>
+                            </span>
                         </div>
 
                         <div
@@ -403,18 +411,26 @@ const endCalendarDrag = () => {
                                 >
                             </div>
                             <div class="calendar__grid">
-                                <div
+                                <template
                                     v-for="day in acquisitionCalendar.weeks.flat()"
                                     :key="day.key"
-                                    class="calendar__day"
-                                    :class="[
-                                        `calendar__day--level-${day.level}`,
-                                        { 'calendar__day--hidden': day.hidden },
-                                    ]"
-                                    :title="
-                                        day.hidden ? '' : formatDayTooltip(day)
-                                    "
-                                />
+                                >
+                                    <Tooltip
+                                        v-if="!day.hidden"
+                                        :text="formatDayTooltip(day)"
+                                        :focusable="false"
+                                        class="calendar__day-tooltip"
+                                    >
+                                        <div
+                                            class="calendar__day"
+                                            :class="`calendar__day--level-${day.level}`"
+                                        />
+                                    </Tooltip>
+                                    <div
+                                        v-else
+                                        class="calendar__day calendar__day--hidden"
+                                    />
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -431,26 +447,28 @@ const endCalendarDrag = () => {
                 </div>
                 <div v-else class="stat-card stat-card--pending">
                     <RiCalendarLine class="stat-card__icon" />
-                    <span class="stat-card__value">Coming soon</span>
-                    <span class="stat-card__label"
+                    <span class="stat-card__label stat-card__label--heading"
                         >Acquisitions calendar</span
                     >
+                    <span class="stat-card__value">Coming soon</span>
                 </div>
 
                 <div class="stat-card">
                     <RiDiscLine class="stat-card__icon" />
+                    <span class="stat-card__label stat-card__label--heading"
+                        >Total releases</span
+                    >
                     <span class="stat-card__value">{{ totalReleases }}</span>
-                    <span class="stat-card__label">Total releases</span>
                 </div>
 
                 <div v-if="averageReleaseYear" class="stat-card">
                     <RiCalendarLine class="stat-card__icon" />
-                    <span class="stat-card__value"
-                        >{{ averageReleaseYear }}</span
-                    >
-                    <span class="stat-card__label"
+                    <span class="stat-card__label stat-card__label--heading"
                         >Average release year ({{ collectionAge }} years
                         old)</span
+                    >
+                    <span class="stat-card__value"
+                        >{{ averageReleaseYear }}</span
                     >
                 </div>
 
@@ -459,20 +477,22 @@ const endCalendarDrag = () => {
                     class="stat-card"
                 >
                     <RiTimeLine class="stat-card__icon" />
+                    <span class="stat-card__label stat-card__label--heading"
+                        >Release year range</span
+                    >
                     <span class="stat-card__value"
                         >{{ oldestReleaseYear }} – {{ newestReleaseYear }}</span
                     >
-                    <span class="stat-card__label">Release year range</span>
                 </div>
 
                 <div v-if="firstAcquiredDate" class="stat-card">
                     <RiCalendarLine class="stat-card__icon" />
+                    <span class="stat-card__label stat-card__label--heading"
+                        >First release added to your collection</span
+                    >
                     <span class="stat-card__value">{{
                         formatDate(firstAcquiredDate)
                     }}</span>
-                    <span class="stat-card__label"
-                        >First release added to your collection</span
-                    >
                 </div>
 
                 <div v-if="topArtists.length" class="stat-card">
@@ -627,35 +647,58 @@ const endCalendarDrag = () => {
                 </div>
                 <div v-else class="stat-card stat-card--pending">
                     <RiPriceTag3Line class="stat-card__icon" />
-                    <span class="stat-card__value">Coming soon</span>
-                    <span class="stat-card__label"
+                    <span class="stat-card__label stat-card__label--heading"
                         >Most common genre
                     </span>
+                    <span class="stat-card__value">Coming soon</span>
                 </div>
 
                 <div v-if="averageDurationSeconds" class="stat-card">
                     <RiTimeLine class="stat-card__icon" />
-                    <span class="stat-card__value"
-                        >{{ formatDuration(totalDurationSeconds) }}</span
-                    >
                     <span
-                        class="stat-card__label stat-card__label--with-tooltip"
+                        class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
                     >
-                        Total collection length (avg
-                        {{ formatDuration(averageDurationSeconds) }}/release)
+                        Total collection length
                         <Tooltip
                             text="Track durations come from Discogs and are approximate - they may not match your physical copies exactly."
                         >
                             <RiInformationLine class="stat-card__info-icon" />
                         </Tooltip>
                     </span>
+                    <span class="stat-card__value"
+                        >{{ formatDuration(totalDurationSeconds) }}</span
+                    >
                 </div>
                 <div v-else class="stat-card stat-card--pending">
                     <RiTimeLine class="stat-card__icon" />
-                    <span class="stat-card__value">Coming soon</span>
-                    <span class="stat-card__label"
-                        >Total & average album length</span
+                    <span class="stat-card__label stat-card__label--heading"
+                        >Total collection length</span
                     >
+                    <span class="stat-card__value">Coming soon</span>
+                </div>
+
+                <div v-if="averageDurationSeconds" class="stat-card">
+                    <RiTimeLine class="stat-card__icon" />
+                    <span
+                        class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
+                    >
+                        Average release length
+                        <Tooltip
+                            text="Track durations come from Discogs and are approximate - they may not match your physical copies exactly."
+                        >
+                            <RiInformationLine class="stat-card__info-icon" />
+                        </Tooltip>
+                    </span>
+                    <span class="stat-card__value"
+                        >{{ formatDuration(averageDurationSeconds) }}</span
+                    >
+                </div>
+                <div v-else class="stat-card stat-card--pending">
+                    <RiTimeLine class="stat-card__icon" />
+                    <span class="stat-card__label stat-card__label--heading"
+                        >Average release length</span
+                    >
+                    <span class="stat-card__value">Coming soon</span>
                 </div>
             </div>
         </template>
@@ -672,7 +715,7 @@ const endCalendarDrag = () => {
     padding: 2rem 1.5rem;
     text-align: center;
     color: $text-muted;
-    background-color: rgba($border, 0.2);
+    background-color: color-mix(in srgb, #{$border} 20%, transparent);
     border: 1px dashed $border;
     border-radius: 10px;
 }
@@ -800,6 +843,12 @@ const endCalendarDrag = () => {
         width: max-content;
     }
 
+    &__day-tooltip {
+        display: flex;
+        width: $cell;
+        height: $cell;
+    }
+
     &__legend {
         display: flex;
         align-items: center;
@@ -813,7 +862,7 @@ const endCalendarDrag = () => {
         width: $cell;
         height: $cell;
         border-radius: 2px;
-        background-color: rgba($border, 0.6);
+        background-color: color-mix(in srgb, #{$border} 60%, transparent);
 
         &--level-1 {
             background-color: rgba($primary, 0.25);
@@ -832,7 +881,7 @@ const endCalendarDrag = () => {
         }
 
         &--hidden {
-            visibility: hidden;
+            background-color: color-mix(in srgb, #{$border} 25%, transparent);
         }
     }
 }
@@ -897,7 +946,7 @@ const endCalendarDrag = () => {
     &__track {
         height: 6px;
         border-radius: 999px;
-        background-color: rgba($border, 0.6);
+        background-color: color-mix(in srgb, #{$border} 60%, transparent);
         overflow: hidden;
     }
 
