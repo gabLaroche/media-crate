@@ -82,10 +82,10 @@ const submit = async () => {
 .feedback-page {
     max-width: 540px;
     margin: 0 auto;
-    padding: 3.2rem 1.6rem;
+    padding: 0.8rem;
 
     h1 {
-        margin-bottom: 3.2rem;
+        margin-bottom: 0.75rem;
     }
 }
 
@@ -93,20 +93,23 @@ const submit = async () => {
     background-color: $primary-muted;
     color: $neutral-dark;
     border-radius: 8px;
-    padding: 2.4rem;
+    padding: 0.875rem;
 }
 
 .section__description {
     font-size: 0.875rem;
-    margin-bottom: 2rem;
+    margin-bottom: 0.625rem;
     opacity: 0.8;
+}
+
+form {
+    gap: 0.625rem;
 }
 
 .field {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.6rem;
+    gap: 0.25rem;
 
     label {
         font-size: 0.875rem;
