@@ -331,6 +331,9 @@ const onViewDialogClick = (e) => {
 // ── Dialog ───────────────────────────────────────────────
 dialog {
     border: 0;
+    padding: 0;
+    max-width: 100vw;
+    max-height: 100vh;
     background-color: transparent;
     cursor: default;
     // Prevent the dialog itself from becoming a second scroll container -
