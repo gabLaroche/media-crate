@@ -175,7 +175,7 @@ const update = (field, value) => {
         padding: 1.25rem;
         border-bottom: 1px solid $border;
         border-radius: 10px 10px 0 0;
-        background-color: rgba($border, 0.25);
+        background-color: color-mix(in srgb, #{$border} 25%, transparent);
     }
 
     .bulk-row__secondary {

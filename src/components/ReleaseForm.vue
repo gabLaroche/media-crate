@@ -508,7 +508,7 @@ const resetBulkForm = () => {
     padding: 2rem 1.5rem;
     text-align: center;
     color: $text-muted;
-    background-color: rgba($border, 0.2);
+    background-color: color-mix(in srgb, #{$border} 20%, transparent);
     border: 1px dashed $border;
     border-radius: 10px;
 }
