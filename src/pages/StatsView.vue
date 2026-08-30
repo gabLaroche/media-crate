@@ -446,27 +446,36 @@ const endCalendarDrag = () => {
                     </div>
                 </div>
                 <div v-else class="stat-card stat-card--pending">
-                    <RiCalendarLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Acquisitions calendar</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiCalendarLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Acquisitions calendar</span
+                        >
+                    </div>
                     <span class="stat-card__value">Coming soon</span>
                 </div>
 
                 <div class="stat-card">
-                    <RiDiscLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Total releases</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiDiscLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Total releases</span
+                        >
+                    </div>
                     <span class="stat-card__value">{{ totalReleases }}</span>
                 </div>
 
                 <div v-if="averageReleaseYear" class="stat-card">
-                    <RiCalendarLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Average release year ({{ collectionAge }} years
-                        old)</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiCalendarLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Average release year ({{ collectionAge }} years
+                            old)</span
+                        >
+                    </div>
                     <span class="stat-card__value"
                         >{{ averageReleaseYear }}</span
                     >
@@ -476,30 +485,39 @@ const endCalendarDrag = () => {
                     v-if="oldestReleaseYear && newestReleaseYear"
                     class="stat-card"
                 >
-                    <RiTimeLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Release year range</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiTimeLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Release year range</span
+                        >
+                    </div>
                     <span class="stat-card__value"
                         >{{ oldestReleaseYear }} – {{ newestReleaseYear }}</span
                     >
                 </div>
 
                 <div v-if="firstAcquiredDate" class="stat-card">
-                    <RiCalendarLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >First release added to your collection</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiCalendarLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >First release added to your collection</span
+                        >
+                    </div>
                     <span class="stat-card__value">{{
                         formatDate(firstAcquiredDate)
                     }}</span>
                 </div>
 
                 <div v-if="topArtists.length" class="stat-card">
-                    <RiUserStarLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Top artists</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiUserStarLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Top artists</span
+                        >
+                    </div>
                     <div class="stat-card__bars">
                         <div
                             v-for="a in topArtists"
@@ -520,10 +538,13 @@ const endCalendarDrag = () => {
                 </div>
 
                 <div v-if="sourceBreakdown.length" class="stat-card">
-                    <RiStore2Line class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Top sources</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiStore2Line class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Top sources</span
+                        >
+                    </div>
                     <div class="stat-card__bars">
                         <div
                             v-for="s in sourceBreakdown"
@@ -544,10 +565,13 @@ const endCalendarDrag = () => {
                 </div>
 
                 <div v-if="decadeBreakdown.length" class="stat-card">
-                    <RiHistoryLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Releases by decade</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiHistoryLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Releases by decade</span
+                        >
+                    </div>
                     <div class="stat-card__bars">
                         <div
                             v-for="d in decadeBreakdown"
@@ -568,10 +592,13 @@ const endCalendarDrag = () => {
                 </div>
 
                 <div v-if="formatBreakdown.length" class="stat-card">
-                    <RiPieChartLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Format breakdown</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiPieChartLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Format breakdown</span
+                        >
+                    </div>
                     <div class="stat-card__bars">
                         <div
                             v-for="f in formatBreakdown"
@@ -592,10 +619,13 @@ const endCalendarDrag = () => {
                 </div>
 
                 <div v-if="conditionBreakdown.length" class="stat-card">
-                    <RiBarChartLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Condition breakdown</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiBarChartLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Condition breakdown</span
+                        >
+                    </div>
                     <div class="stat-card__bars">
                         <div
                             v-for="c in conditionBreakdown"
@@ -616,17 +646,21 @@ const endCalendarDrag = () => {
                 </div>
 
                 <div v-if="genreBreakdown.length" class="stat-card">
-                    <RiPriceTag3Line class="stat-card__icon" />
-                    <span
-                        class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
-                    >
-                        Top genres
-                        <Tooltip
-                            text="Genre tags come from Discogs and are approximate - they may not match every release exactly."
+                    <div class="stat-card__heading">
+                        <RiPriceTag3Line class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
                         >
-                            <RiInformationLine class="stat-card__info-icon" />
-                        </Tooltip>
-                    </span>
+                            Top genres
+                            <Tooltip
+                                text="Genre tags come from Discogs and are approximate - they may not match every release exactly."
+                            >
+                                <RiInformationLine
+                                    class="stat-card__info-icon"
+                                />
+                            </Tooltip>
+                        </span>
+                    </div>
                     <div class="stat-card__bars">
                         <div
                             v-for="g in genreBreakdown"
@@ -646,58 +680,75 @@ const endCalendarDrag = () => {
                     </div>
                 </div>
                 <div v-else class="stat-card stat-card--pending">
-                    <RiPriceTag3Line class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Most common genre
-                    </span>
+                    <div class="stat-card__heading">
+                        <RiPriceTag3Line class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Most common genre
+                        </span>
+                    </div>
                     <span class="stat-card__value">Coming soon</span>
                 </div>
 
                 <div v-if="averageDurationSeconds" class="stat-card">
-                    <RiTimeLine class="stat-card__icon" />
-                    <span
-                        class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
-                    >
-                        Total collection length
-                        <Tooltip
-                            text="Track durations come from Discogs and are approximate - they may not match your physical copies exactly."
+                    <div class="stat-card__heading">
+                        <RiTimeLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
                         >
-                            <RiInformationLine class="stat-card__info-icon" />
-                        </Tooltip>
-                    </span>
+                            Total collection length
+                            <Tooltip
+                                text="Track durations come from Discogs and are approximate - they may not match your physical copies exactly."
+                            >
+                                <RiInformationLine
+                                    class="stat-card__info-icon"
+                                />
+                            </Tooltip>
+                        </span>
+                    </div>
                     <span class="stat-card__value"
                         >{{ formatDuration(totalDurationSeconds) }}</span
                     >
                 </div>
                 <div v-else class="stat-card stat-card--pending">
-                    <RiTimeLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Total collection length</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiTimeLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Total collection length</span
+                        >
+                    </div>
                     <span class="stat-card__value">Coming soon</span>
                 </div>
 
                 <div v-if="averageDurationSeconds" class="stat-card">
-                    <RiTimeLine class="stat-card__icon" />
-                    <span
-                        class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
-                    >
-                        Average release length
-                        <Tooltip
-                            text="Track durations come from Discogs and are approximate - they may not match your physical copies exactly."
+                    <div class="stat-card__heading">
+                        <RiTimeLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading stat-card__label--with-tooltip"
                         >
-                            <RiInformationLine class="stat-card__info-icon" />
-                        </Tooltip>
-                    </span>
+                            Average release length
+                            <Tooltip
+                                text="Track durations come from Discogs and are approximate - they may not match your physical copies exactly."
+                            >
+                                <RiInformationLine
+                                    class="stat-card__info-icon"
+                                />
+                            </Tooltip>
+                        </span>
+                    </div>
                     <span class="stat-card__value"
                         >{{ formatDuration(averageDurationSeconds) }}</span
                     >
                 </div>
                 <div v-else class="stat-card stat-card--pending">
-                    <RiTimeLine class="stat-card__icon" />
-                    <span class="stat-card__label stat-card__label--heading"
-                        >Average release length</span
-                    >
+                    <div class="stat-card__heading">
+                        <RiTimeLine class="stat-card__icon" />
+                        <span
+                            class="stat-card__label stat-card__label--heading"
+                            >Average release length</span
+                        >
+                    </div>
                     <span class="stat-card__value">Coming soon</span>
                 </div>
             </div>
@@ -886,11 +937,16 @@ const endCalendarDrag = () => {
     }
 }
 
+.stat-card__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .stat-card__icon {
     color: $primary;
     width: 22px;
     height: 22px;
-    margin-bottom: 0.25rem;
 }
 
 .stat-card__value {
